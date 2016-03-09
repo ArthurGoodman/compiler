@@ -18,12 +18,14 @@ public:
     void mov(Register to, Register from, int disp32);
 
     void add(Register a, Register b);
+    void add(Register a, Register b, byte disp8);
+    void add(Register a, Register b, int disp32);
 
     void ret();
 
     Function compile();
 
 private:
-    void modRM(Mod mod, Register rm, Register r);
+    void modRM(Mod mod, int rm, int r);
 };
 }

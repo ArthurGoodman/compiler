@@ -34,6 +34,18 @@ void Compiler::add(Register a, Register b) {
     modRM(Reg, b, a);
 }
 
+void Compiler::add(Register a, Register b, byte disp8) {
+    f.gen((byte)('\x03'));
+    modRM(Disp8, a, b);
+    f.gen(disp8);
+}
+
+void Compiler::add(Register a, Register b, int disp32) {
+    f.gen((byte)('\x03'));
+    modRM(Disp32, a, b);
+    f.gen(disp32);
+}
+
 void Compiler::ret() {
     f.gen((byte)'\xc3');
 }
@@ -42,7 +54,10 @@ Function Compiler::compile() {
     return std::move(f);
 }
 
-void Compiler::modRM(Mod mod, Register rm, Register r) {
+void Compiler::modRM(Mod mod, int rm, int r) {
     f.gen((byte)(mod << 6 | rm << 3 | r));
+
+    if (r == ESP)
+        f.gen((byte)(Disp0 << 6 | r << 3 | ESP));
 }
 }
