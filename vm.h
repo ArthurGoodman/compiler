@@ -11,4 +11,11 @@ enum Register {
     ESI,
     EDI
 };
+
+enum Mod {
+    Disp0,
+    Disp8,
+    Disp32,
+    Reg
+};
 }

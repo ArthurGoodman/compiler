@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "bytearray.h"
 
 namespace vm {
@@ -8,8 +11,26 @@ public:
     ByteArray code;
 
 public:
+    Function();
+    Function(const Function &f);
+    Function(Function &&f);
+
+    Function &operator=(const Function &f);
+    Function &operator=(Function &&f);
+
     void gen(const char *opcodes);
 
-    void invoke();
+    template <class T>
+    void gen(T value);
+
+    int invoke();
+    int invoke(const std::vector<int> &args);
+
+    std::string dump();
 };
+
+template <class T>
+void Function::gen(T value) {
+    *code.allocate(sizeof(T)) = value;
+}
 }

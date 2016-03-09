@@ -13,8 +13,46 @@ ByteArray::ByteArray()
     : size(0), capacity(0), data(0) {
 }
 
+ByteArray::ByteArray(const ByteArray &array)
+    : size(array.size), capacity(array.capacity) {
+    data = (byte *)malloc(capacity);
+    memcpy(data, array.data, size);
+}
+
+ByteArray::ByteArray(ByteArray &&array)
+    : size(array.size), capacity(array.capacity), data(array.data) {
+    array.data = 0;
+    array.size = 0;
+    array.capacity = 0;
+}
+
 ByteArray::~ByteArray() {
     release();
+}
+
+ByteArray &ByteArray::operator=(const ByteArray &array) {
+    size = array.size;
+    capacity = array.capacity;
+
+    ::free(data);
+    data = (byte *)malloc(capacity);
+    memcpy(data, array.data, size);
+
+    return *this;
+}
+
+ByteArray &ByteArray::operator=(ByteArray &&array) {
+    size = array.size;
+    capacity = array.capacity;
+
+    ::free(data);
+    data = array.data;
+
+    array.data = 0;
+    array.size = 0;
+    array.capacity = 0;
+
+    return *this;
 }
 
 byte *ByteArray::allocate(uint count) {
@@ -49,8 +87,7 @@ bool ByteArray::free(uint count) {
 }
 
 void ByteArray::release() {
-    if (data)
-        ::free(data);
+    ::free(data);
 
     size = 0;
     capacity = 0;
@@ -84,4 +121,8 @@ uint ByteArray::getSize() const {
 
 uint ByteArray::getCapacity() const {
     return capacity;
+}
+
+byte &ByteArray::operator[](int index) {
+    return data[index];
 }
