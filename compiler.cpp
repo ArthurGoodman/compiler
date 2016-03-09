@@ -14,35 +14,35 @@ void Compiler::pop(Register reg) {
 
 void Compiler::mov(Register to, Register from) {
     f.gen((byte)0x89);
-    modRM(Reg, from, to);
+    modRegRM(Reg, from, to);
 }
 
 void Compiler::mov(Register to, Register from, byte disp8) {
     f.gen((byte)0x8b);
-    modRM(Disp8, to, from);
+    modRegRM(Disp8, to, from);
     f.gen(disp8);
 }
 
 void Compiler::mov(Register to, Register from, int disp32) {
     f.gen((byte)0x8b);
-    modRM(Disp32, to, from);
+    modRegRM(Disp32, to, from);
     f.gen(disp32);
 }
 
 void Compiler::add(Register a, Register b) {
     f.gen((byte)0x1);
-    modRM(Reg, b, a);
+    modRegRM(Reg, b, a);
 }
 
 void Compiler::add(Register a, Register b, byte disp8) {
     f.gen((byte)0x3);
-    modRM(Disp8, a, b);
+    modRegRM(Disp8, a, b);
     f.gen(disp8);
 }
 
 void Compiler::add(Register a, Register b, int disp32) {
     f.gen((byte)0x3);
-    modRM(Disp32, a, b);
+    modRegRM(Disp32, a, b);
     f.gen(disp32);
 }
 
@@ -62,10 +62,10 @@ Function Compiler::compile() {
     return std::move(f);
 }
 
-void Compiler::modRM(Mod mod, int r, int rm) {
-    f.gen((byte)(mod << 6 | r << 3 | rm));
+void Compiler::modRegRM(Mod mod, int reg, int rm) {
+    f.gen((byte)(mod << 6 | reg << 3 | rm));
 
-    if (rm == ESP)
+    if (rm == ESP && mod != Reg)
         f.gen((byte)(0 << 6 | rm << 3 | rm));
 }
 }

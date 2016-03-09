@@ -20,7 +20,11 @@ public:
     Function &operator=(Function &&f);
 
     int invoke();
-    int invoke(const std::vector<int> &args);
+    int invoke(int _0);
+    int invoke(int _0, int _1);
+    int invoke(int _0, int _1, int _2);
+    int invoke(int _0, int _1, int _2, int _3);
+    int invoke(int _0, int _1, int _2, int _3, int _4);
 
     std::string dump();
 

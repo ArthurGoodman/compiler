@@ -25,33 +25,34 @@ Function &Function::operator=(Function &&f) {
 }
 
 int Function::invoke() {
-    return ((int (*)())code.getData())();
+    return ((int (*)(...))code.getData())();
 }
 
-int Function::invoke(const std::vector<int> &args) {
-    switch (args.size()) {
-    case 0:
-        return ((int (*)(...))code.getData())();
-    case 1:
-        return ((int (*)(...))code.getData())(args[0]);
-    case 2:
-        return ((int (*)(...))code.getData())(args[0], args[1]);
-    case 3:
-        return ((int (*)(...))code.getData())(args[0], args[1], args[2]);
-    case 4:
-        return ((int (*)(...))code.getData())(args[0], args[1], args[2], args[3]);
-    case 5:
-        return ((int (*)(...))code.getData())(args[0], args[1], args[2], args[3], args[4]);
-    default:
-        return 0;
-    }
+int Function::invoke(int _0) {
+    return ((int (*)(...))code.getData())(_0);
+}
+
+int Function::invoke(int _0, int _1) {
+    return ((int (*)(...))code.getData())(_0, _1);
+}
+
+int Function::invoke(int _0, int _1, int _2) {
+    return ((int (*)(...))code.getData())(_0, _1, _2);
+}
+
+int Function::invoke(int _0, int _1, int _2, int _3) {
+    return ((int (*)(...))code.getData())(_0, _1, _2, _3);
+}
+
+int Function::invoke(int _0, int _1, int _2, int _3, int _4) {
+    return ((int (*)(...))code.getData())(_0, _1, _2, _3, _4);
 }
 
 std::string Function::dump() {
     std::string result;
 
     for (uint i = 0; i < code.getSize(); i++)
-        result += (i > 0 ? " " : "") + toString((int)code[i], 16, 2);
+        result += (i > 0 ? code[i] < 0x10 ? " 0" : " " : "") + toString((int)code[i], 16, 0);
 
     return result;
 }

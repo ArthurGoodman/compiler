@@ -5,6 +5,13 @@
 
 namespace vm {
 class Compiler {
+    enum Mod {
+        Disp0,
+        Disp8,
+        Disp32,
+        Reg
+    };
+
     Function f;
 
 public:
@@ -29,6 +36,6 @@ public:
     Function compile();
 
 private:
-    void modRM(Mod mod, int r, int rm);
+    void modRegRM(Mod mod, int reg, int rm);
 };
 }
