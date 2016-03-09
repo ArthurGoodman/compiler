@@ -36,6 +36,6 @@ public:
     Function compile();
 
 private:
-    void modRegRM(Mod mod, int reg, int rm);
+    void modRegRM(Mod mod, Register reg, Register rm);
 };
 }

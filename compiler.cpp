@@ -62,7 +62,7 @@ Function Compiler::compile() {
     return std::move(f);
 }
 
-void Compiler::modRegRM(Mod mod, int reg, int rm) {
+void Compiler::modRegRM(Mod mod, Register reg, Register rm) {
     f.gen((byte)(mod << 6 | reg << 3 | rm));
 
     if (rm == ESP && mod != Reg)

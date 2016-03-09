@@ -37,6 +37,6 @@ private:
 
 template <class T>
 void Function::gen(T value) {
-    *code.allocate(sizeof(T)) = value;
+    *(T *)code.allocate(sizeof(T)) = value;
 }
 }
