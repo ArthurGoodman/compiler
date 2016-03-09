@@ -24,12 +24,6 @@ Function &Function::operator=(Function &&f) {
     return *this;
 }
 
-void Function::gen(const char *opcodes) {
-    int len = strlen(opcodes);
-    byte *data = code.allocate(len);
-    memcpy(data, opcodes, len);
-}
-
 int Function::invoke() {
     return ((int (*)())code.getData())();
 }
@@ -57,8 +51,14 @@ std::string Function::dump() {
     std::string result;
 
     for (uint i = 0; i < code.getSize(); i++)
-        result += "\\x" + toString((int)code[i], 16, 2);
+        result += (i > 0 ? " " : "") + toString((int)code[i], 16, 2);
 
     return result;
+}
+
+void Function::gen(const char *opcodes) {
+    int len = strlen(opcodes);
+    byte *data = code.allocate(len);
+    memcpy(data, opcodes, len);
 }
 }

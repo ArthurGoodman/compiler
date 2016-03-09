@@ -7,7 +7,8 @@
 
 namespace vm {
 class Function {
-public:
+    friend class Compiler;
+
     ByteArray code;
 
 public:
@@ -18,15 +19,16 @@ public:
     Function &operator=(const Function &f);
     Function &operator=(Function &&f);
 
-    void gen(const char *opcodes);
-
-    template <class T>
-    void gen(T value);
-
     int invoke();
     int invoke(const std::vector<int> &args);
 
     std::string dump();
+
+private:
+    void gen(const char *opcodes);
+
+    template <class T>
+    void gen(T value);
 };
 
 template <class T>

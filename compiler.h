@@ -21,11 +21,14 @@ public:
     void add(Register a, Register b, byte disp8);
     void add(Register a, Register b, int disp32);
 
+    void leave();
     void ret();
+
+    void nop();
 
     Function compile();
 
 private:
-    void modRM(Mod mod, int rm, int r);
+    void modRM(Mod mod, int r, int rm);
 };
 }
