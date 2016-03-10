@@ -28,13 +28,13 @@ int Function::invoke(int n, ...) {
     int (*f)() = (int (*)())code.getData();
 
     for (int i = 0; i < n; i++)
-        asm("push %0\n"
+        asm("push %0"
             :
-            : "g"(*(&n + i + 1)));
+            : "g"(*(&n + n - i)));
 
     int r = f();
 
-    asm("add esp,%0\n"
+    asm("add esp,%0"
         :
         : "g"(n * sizeof(int)));
 
@@ -47,7 +47,7 @@ int Function::invoke(const std::vector<int> &args) {
     for (uint i = 0; i < args.size(); i++)
         asm("push %0\n"
             :
-            : "g"(args[i]));
+            : "g"(args[args.size() - i - 1]));
 
     int r = f();
 
