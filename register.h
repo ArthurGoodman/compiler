@@ -32,15 +32,15 @@ class Register {
 public:
     Register(RegisterValue value);
 
-    bool isAddress();
+    bool isAddress() const;
 
-    Disp getDisp();
-    byte getDispSize();
+    Disp getDisp() const;
+    byte getDispSize() const;
 
-    Register operator+(byte disp);
-    Register operator+(int disp);
+    Register operator+(byte disp) const;
+    Register operator+(int disp) const;
 
-    operator byte();
+    operator byte() const;
 };
 
 Register operator+(RegisterValue value, byte disp);

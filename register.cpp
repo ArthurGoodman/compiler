@@ -5,19 +5,19 @@ Register::Register(RegisterValue value)
     : value(value), address(false), dispSize(0) {
 }
 
-bool Register::isAddress() {
+bool Register::isAddress() const {
     return address;
 }
 
-Register::Disp Register::getDisp() {
+Register::Disp Register::getDisp() const {
     return disp;
 }
 
-byte Register::getDispSize() {
+byte Register::getDispSize() const {
     return dispSize;
 }
 
-Register Register::operator+(byte disp) {
+Register Register::operator+(byte disp) const {
     Register reg(value);
 
     reg.address = true;
@@ -27,7 +27,7 @@ Register Register::operator+(byte disp) {
     return reg;
 }
 
-Register Register::operator+(int disp) {
+Register Register::operator+(int disp) const {
     Register reg(value);
 
     reg.address = true;
@@ -37,7 +37,7 @@ Register Register::operator+(int disp) {
     return reg;
 }
 
-Register::operator byte() {
+Register::operator byte() const {
     return value;
 }
 

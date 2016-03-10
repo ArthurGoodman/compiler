@@ -17,12 +17,12 @@ class Compiler {
 public:
     Compiler();
 
-    void push(Register reg);
-    void pop(Register reg);
+    void push(const Register &reg);
+    void pop(const Register &reg);
 
-    void mov(Register dst, Register src);
+    void mov(const Register &dst, const Register &src);
 
-    void add(Register op1, Register op2);
+    void add(const Register &op1, const Register &op2);
 
     void leave();
     void ret();
@@ -32,7 +32,9 @@ public:
     Function compile();
 
 private:
-    void modRegRM(Mod mod, Register reg, Register rm);
+    void regRMInstruction(byte op, const Register &dst, const Register &src);
+
+    void modRegRM(Mod mod, const Register &reg, const Register &rm);
     byte compose(byte first, byte second, byte third);
 };
 }
