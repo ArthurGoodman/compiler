@@ -1,7 +1,5 @@
 #include "function.h"
 
-#include <string.h>
-
 namespace vm {
 Function::Function() {
 }
@@ -27,10 +25,10 @@ Function &Function::operator=(Function &&f) {
 int Function::invoke(int n, ...) {
     int (*f)() = (int (*)())code.getData();
 
-    for (int i = 0; i < n; i++)
+    for (int *i = &n + n; i > &n; i--)
         asm("push %0"
             :
-            : "g"(*(&n + n - i)));
+            : "g"(*i));
 
     int r = f();
 
@@ -44,10 +42,10 @@ int Function::invoke(int n, ...) {
 int Function::invoke(const std::vector<int> &args) {
     int (*f)() = (int (*)())code.getData();
 
-    for (uint i = 0; i < args.size(); i++)
+    for (int i = args.size() - 1; i >= 0; i--)
         asm("push %0\n"
             :
-            : "g"(args[args.size() - i - 1]));
+            : "g"(args[i]));
 
     int r = f();
 
@@ -58,6 +56,10 @@ int Function::invoke(const std::vector<int> &args) {
     return r;
 }
 
+byte *Function::getCode() {
+    return code.getData();
+}
+
 std::string Function::dump() {
     std::string result;
 
@@ -65,11 +67,5 @@ std::string Function::dump() {
         result += (i > 0 ? code[i] < 0x10 ? " 0" : " " : "") + toString((int)code[i], 16, 0);
 
     return result;
-}
-
-void Function::gen(const char *opcodes) {
-    int len = strlen(opcodes);
-    byte *data = code.allocate(len);
-    memcpy(data, opcodes, len);
 }
 }

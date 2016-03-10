@@ -12,38 +12,108 @@ void Compiler::pop(Register reg) {
     f.gen((byte)(0x58 + reg));
 }
 
-void Compiler::mov(Register to, Register from) {
-    f.gen((byte)0x89);
-    modRegRM(Reg, from, to);
+void Compiler::mov(Register dst, Register src) {
+    if (dst.isAddress()) {
+        if (src.isAddress())
+            return;
+
+        switch (dst.getDispSize()) {
+        case 0:
+            break;
+
+        case 1:
+            f.gen((byte)0x89);
+            modRegRM(Disp8, dst, src);
+            f.gen(dst.getDisp().as.Byte);
+            break;
+
+        case 4:
+            f.gen((byte)0x89);
+            modRegRM(Disp32, dst, src);
+            f.gen(dst.getDisp().as.Int);
+            break;
+
+        default:
+            return;
+        }
+    } else {
+        if (src.isAddress()) {
+            switch (src.getDispSize()) {
+            case 0:
+                break;
+
+            case 1:
+                f.gen((byte)0x8b);
+                modRegRM(Disp8, dst, src);
+                f.gen(src.getDisp().as.Byte);
+                break;
+
+            case 4:
+                f.gen((byte)0x8b);
+                modRegRM(Disp32, dst, src);
+                f.gen(src.getDisp().as.Int);
+                break;
+
+            default:
+                return;
+            }
+        } else {
+            f.gen((byte)0x89);
+            modRegRM(Reg, src, dst);
+        }
+    }
 }
 
-void Compiler::mov(Register to, Register from, byte disp8) {
-    f.gen((byte)0x8b);
-    modRegRM(Disp8, to, from);
-    f.gen(disp8);
-}
+void Compiler::add(Register op1, Register op2) {
+    if (op1.isAddress()) {
+        if (op2.isAddress())
+            return;
 
-void Compiler::mov(Register to, Register from, int disp32) {
-    f.gen((byte)0x8b);
-    modRegRM(Disp32, to, from);
-    f.gen(disp32);
-}
+        switch (op1.getDispSize()) {
+        case 0:
+            break;
 
-void Compiler::add(Register a, Register b) {
-    f.gen((byte)0x1);
-    modRegRM(Reg, b, a);
-}
+        case 1:
+            f.gen((byte)0x1);
+            modRegRM(Disp8, op1, op2);
+            f.gen(op1.getDisp().as.Byte);
+            break;
 
-void Compiler::add(Register a, Register b, byte disp8) {
-    f.gen((byte)0x3);
-    modRegRM(Disp8, a, b);
-    f.gen(disp8);
-}
+        case 4:
+            f.gen((byte)0x1);
+            modRegRM(Disp32, op1, op2);
+            f.gen(op1.getDisp().as.Int);
+            break;
 
-void Compiler::add(Register a, Register b, int disp32) {
-    f.gen((byte)0x3);
-    modRegRM(Disp32, a, b);
-    f.gen(disp32);
+        default:
+            return;
+        }
+    } else {
+        if (op2.isAddress()) {
+            switch (op2.getDispSize()) {
+            case 0:
+                break;
+
+            case 1:
+                f.gen((byte)0x3);
+                modRegRM(Disp8, op1, op2);
+                f.gen(op2.getDisp().as.Byte);
+                break;
+
+            case 4:
+                f.gen((byte)0x3);
+                modRegRM(Disp32, op1, op2);
+                f.gen(op2.getDisp().as.Int);
+                break;
+
+            default:
+                return;
+            }
+        } else {
+            f.gen((byte)0x1);
+            modRegRM(Reg, op2, op1);
+        }
+    }
 }
 
 void Compiler::leave() {
@@ -63,9 +133,13 @@ Function Compiler::compile() {
 }
 
 void Compiler::modRegRM(Mod mod, Register reg, Register rm) {
-    f.gen((byte)(mod << 6 | reg << 3 | rm));
+    f.gen(compose(mod, reg, rm));
 
     if (rm == ESP && mod != Reg)
-        f.gen((byte)(0 << 6 | rm << 3 | rm));
+        f.gen(compose(0, rm, rm));
+}
+
+byte Compiler::compose(byte first, byte second, byte third) {
+    return first << 6 | second << 3 | third;
 }
 }

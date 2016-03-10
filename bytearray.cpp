@@ -78,6 +78,23 @@ byte *ByteArray::allocate(uint count) {
     return data + size - count;
 }
 
+int ByteArray::reallocate() {
+    byte *newData = (byte *)malloc(capacity);
+
+    memcpy(newData, data, size);
+
+    int delta = newData - data;
+
+    ::free(data);
+    data = newData;
+
+    return delta;
+}
+
+byte &ByteArray::operator[](int index) {
+    return data[index];
+}
+
 bool ByteArray::free(uint count) {
     if (size < count)
         return false;
@@ -98,19 +115,6 @@ bool ByteArray::enoughSpace(uint count) const {
     return size + count <= capacity;
 }
 
-int ByteArray::reallocate() {
-    byte *newData = (byte *)malloc(capacity);
-
-    memcpy(newData, data, size);
-
-    int delta = newData - data;
-
-    ::free(data);
-    data = newData;
-
-    return delta;
-}
-
 byte *ByteArray::getData() const {
     return data;
 }
@@ -121,8 +125,4 @@ uint ByteArray::getSize() const {
 
 uint ByteArray::getCapacity() const {
     return capacity;
-}
-
-byte &ByteArray::operator[](int index) {
-    return data[index];
 }

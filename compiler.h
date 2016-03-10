@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function.h"
-#include "vm.h"
+#include "register.h"
 
 namespace vm {
 class Compiler {
@@ -20,13 +20,9 @@ public:
     void push(Register reg);
     void pop(Register reg);
 
-    void mov(Register to, Register from);
-    void mov(Register to, Register from, byte disp8);
-    void mov(Register to, Register from, int disp32);
+    void mov(Register dst, Register src);
 
-    void add(Register a, Register b);
-    void add(Register a, Register b, byte disp8);
-    void add(Register a, Register b, int disp32);
+    void add(Register op1, Register op2);
 
     void leave();
     void ret();
@@ -37,5 +33,6 @@ public:
 
 private:
     void modRegRM(Mod mod, Register reg, Register rm);
+    byte compose(byte first, byte second, byte third);
 };
 }

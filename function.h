@@ -13,6 +13,7 @@ class Function {
 
 public:
     Function();
+
     Function(const Function &f);
     Function(Function &&f);
 
@@ -22,17 +23,17 @@ public:
     int invoke(int n = 0, ...);
     int invoke(const std::vector<int> &args);
 
+    byte *getCode();
+
     std::string dump();
 
 private:
-    void gen(const char *opcodes);
-
     template <class T>
     void gen(T value);
 };
 
 template <class T>
 void Function::gen(T value) {
-    *(T *)code.allocate(sizeof(T)) = value;
+    code.push(value);
 }
 }

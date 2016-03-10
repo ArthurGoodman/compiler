@@ -6,14 +6,14 @@ CONFIG -= qt
 QMAKE_CXX += -masm=intel
 
 SOURCES += main.cpp \
-    vm.cpp \
     compiler.cpp \
     function.cpp \
-    bytearray.cpp
+    bytearray.cpp \
+    register.cpp
 
 HEADERS += \
-    vm.h \
     compiler.h \
     common.h \
     function.h \
-    bytearray.h
+    bytearray.h \
+    register.h
