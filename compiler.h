@@ -32,7 +32,7 @@ public:
     Function compile();
 
 private:
-    void regRMInstruction(byte op, const Register &dst, const Register &src);
+    void regRMInstruction(byte op, const Register &op1, const Register &op2);
 
     void modRegRM(Mod mod, const Register &reg, const Register &rm);
     byte compose(byte first, byte second, byte third);

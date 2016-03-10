@@ -1,5 +1,7 @@
 #include "compiler.h"
 
+#include <iostream>
+
 namespace vm {
 Compiler::Compiler() {
 }
@@ -36,31 +38,33 @@ Function Compiler::compile() {
     return std::move(f);
 }
 
-void Compiler::regRMInstruction(byte op, const Register &dst, const Register &src) {
-    if (dst.isAddress() && src.isAddress())
-        return;
-
-    f.gen((byte)(op + (dst.isAddress() || !src.isAddress() ? 0x0 : 0x2)));
-
-    if (!dst.isAddress() && !src.isAddress()) {
-        modRegRM(Reg, src, dst);
+void Compiler::regRMInstruction(byte op, const Register &op1, const Register &op2) {
+    if (op1.isAddress() && op2.isAddress()) {
+        std::cerr << "error: to many memory references\n";
         return;
     }
 
-    switch (dst.isAddress() ? dst.getDispSize() : src.getDispSize()) {
+    f.gen((byte)(op + (op1.isAddress() || !op2.isAddress() ? 0x0 : 0x2)));
+
+    if (!op1.isAddress() && !op2.isAddress()) {
+        modRegRM(Reg, op2, op1);
+        return;
+    }
+
+    const Register &rm = op1.isAddress() ? op1 : op2;
+
+    switch (rm.getDispSize()) {
     case 0:
         break;
 
     case 1:
-        modRegRM(Disp8, dst, src);
-        if (dst.isAddress() || src.isAddress())
-            f.gen(dst.isAddress() ? dst.getDisp().as.Byte : src.getDisp().as.Byte);
+        modRegRM(Disp8, op1, op2);
+        f.gen(rm.getDisp().as.Byte);
         break;
 
     case 4:
-        modRegRM(Disp32, dst, src);
-        if (dst.isAddress() || src.isAddress())
-            f.gen(dst.isAddress() ? dst.getDisp().as.Int : src.getDisp().as.Int);
+        modRegRM(Disp32, op1, op2);
+        f.gen(rm.getDisp().as.Int);
         break;
 
     default:
