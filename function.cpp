@@ -24,28 +24,21 @@ Function &Function::operator=(Function &&f) {
     return *this;
 }
 
-int Function::invoke() {
-    return ((int (*)(...))code.getData())();
-}
+int Function::invoke(int n, ...) {
+    int (*f)() = (int (*)())code.getData();
 
-int Function::invoke(int _0) {
-    return ((int (*)(...))code.getData())(_0);
-}
+    for (int i = 0; i < n; i++)
+        asm("push %0\n"
+            :
+            : "g"(*(&n + i + 1)));
 
-int Function::invoke(int _0, int _1) {
-    return ((int (*)(...))code.getData())(_0, _1);
-}
+    int r = f();
 
-int Function::invoke(int _0, int _1, int _2) {
-    return ((int (*)(...))code.getData())(_0, _1, _2);
-}
+    asm("add esp,%0\n"
+        :
+        : "g"(n * sizeof(int)));
 
-int Function::invoke(int _0, int _1, int _2, int _3) {
-    return ((int (*)(...))code.getData())(_0, _1, _2, _3);
-}
-
-int Function::invoke(int _0, int _1, int _2, int _3, int _4) {
-    return ((int (*)(...))code.getData())(_0, _1, _2, _3, _4);
+    return r;
 }
 
 std::string Function::dump() {

@@ -19,13 +19,7 @@ public:
     Function &operator=(const Function &f);
     Function &operator=(Function &&f);
 
-    int invoke();
-    int invoke(int _0);
-    int invoke(int _0, int _1);
-    int invoke(int _0, int _1, int _2);
-    int invoke(int _0, int _1, int _2, int _3);
-    int invoke(int _0, int _1, int _2, int _3, int _4);
-
+    int invoke(int n = 0, ...);
     std::string dump();
 
 private:
