@@ -26,7 +26,7 @@ int main() {
     std::cout << g.dump() << "\n";
 
     std::cout << f.invoke(2, 2, 3) << "\n";
-    std::cout << g.invoke(2, 4, 5) << "\n";
+    std::cout << g.invoke({4, 5}) << "\n";
 
     return 0;
 }

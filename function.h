@@ -20,6 +20,8 @@ public:
     Function &operator=(Function &&f);
 
     int invoke(int n = 0, ...);
+    int invoke(const std::vector<int> &args);
+
     std::string dump();
 
 private:

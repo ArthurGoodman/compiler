@@ -41,6 +41,23 @@ int Function::invoke(int n, ...) {
     return r;
 }
 
+int Function::invoke(const std::vector<int> &args) {
+    int (*f)() = (int (*)())code.getData();
+
+    for (uint i = 0; i < args.size(); i++)
+        asm("push %0\n"
+            :
+            : "g"(args[i]));
+
+    int r = f();
+
+    asm("add esp,%0\n"
+        :
+        : "g"(args.size() * sizeof(int)));
+
+    return r;
+}
+
 std::string Function::dump() {
     std::string result;
 
