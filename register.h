@@ -14,14 +14,14 @@ enum RegisterValue {
     EDI
 };
 
-struct Disp {
-    union {
-        byte Byte;
-        int Int;
-    } as;
-};
-
 class Register {
+    struct Disp {
+        union {
+            byte Byte;
+            int Int;
+        } as;
+    };
+
     RegisterValue value;
 
     bool address;
@@ -45,4 +45,7 @@ public:
 
 Register operator+(RegisterValue value, byte disp);
 Register operator+(RegisterValue value, int disp);
+
+Register operator-(RegisterValue value, byte disp);
+Register operator-(RegisterValue value, int disp);
 }

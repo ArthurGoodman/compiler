@@ -1,7 +1,7 @@
 #include "register.h"
 
 namespace vm {
-Register::Register(vm::RegisterValue value)
+Register::Register(RegisterValue value)
     : value(value), address(false), dispSize(0) {
 }
 
@@ -9,7 +9,7 @@ bool Register::isAddress() {
     return address;
 }
 
-Disp Register::getDisp() {
+Register::Disp Register::getDisp() {
     return disp;
 }
 
@@ -47,5 +47,13 @@ Register operator+(RegisterValue value, byte disp) {
 
 Register operator+(RegisterValue value, int disp) {
     return Register(value) + disp;
+}
+
+Register operator-(RegisterValue value, byte disp) {
+    return Register(value) + (byte)-disp;
+}
+
+Register operator-(RegisterValue value, int disp) {
+    return Register(value) + -disp;
 }
 }
