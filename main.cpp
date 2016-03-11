@@ -28,7 +28,12 @@ int main() {
 
     c.push(vm::EBP);
     c.mov(vm::EBP, vm::ESP);
-    c.lea(vm::EAX, vm::ptr(vm::EAX));
+    c.sub(vm::ESP, (byte)0x10);
+    c.lea(vm::EAX, vm::EBP - (byte)0x8);
+    c.mov(vm::EBP - (byte)0x4, vm::EAX);
+    c.mov(vm::EAX, vm::EBP - (byte)0x4);
+    c.mov(vm::ptr(vm::EAX), 0x3);
+    c.mov(vm::EAX, vm::EBP - (byte)0x8);
     c.leave();
     c.ret();
 
