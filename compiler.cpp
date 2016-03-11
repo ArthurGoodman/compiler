@@ -19,12 +19,20 @@ void Compiler::mov(const Register &dst, const Register &src) {
 }
 
 void Compiler::mov(const Register &reg, byte value) {
-    regRMInstruction(0xc7, reg, vm::EAX);
+    if (reg.isAddress())
+        regRMInstruction(0xc7, reg, vm::EAX);
+    else
+        f.gen((byte)(0xb0 + reg));
+
     f.gen(value);
 }
 
 void Compiler::mov(const Register &reg, int value) {
-    regRMInstruction(0xc7, reg, vm::EAX);
+    if (reg.isAddress())
+        regRMInstruction(0xc7, reg, vm::EAX);
+    else
+        f.gen((byte)(0xb8 + reg));
+
     f.gen(value);
 }
 

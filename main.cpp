@@ -16,30 +16,22 @@ int main() {
 
     f = c.compile();
     std::cout << f.dump() << "\n";
-    std::cout << f.invoke(2, 2, 3) << "\n";
-
-    c.mov(vm::EAX, vm::ESP + (byte)0x8);
-    c.add(vm::EAX, vm::ESP + (byte)0x4);
-    c.ret();
-
-    f = c.compile();
-    std::cout << f.dump() << "\n";
-    std::cout << f.invoke({4, 5}) << "\n";
+    std::cout << f.invoke(2, 1, 2) << "\n";
 
     c.push(vm::EBP);
     c.mov(vm::EBP, vm::ESP);
-    c.sub(vm::ESP, (byte)0x10);
-    c.lea(vm::EAX, vm::EBP - (byte)0x8);
-    c.mov(vm::EBP - (byte)0x4, vm::EAX);
-    c.mov(vm::EAX, vm::EBP - (byte)0x4);
-    c.mov(vm::ptr(vm::EAX), 0x3);
-    c.mov(vm::EAX, vm::EBP - (byte)0x8);
-    c.leave();
+    c.mov(vm::EAX, vm::EBP + (byte)0x8);
+    c.mov(vm::EDX, vm::ptr(vm::EAX));
+    c.mov(vm::EAX, vm::EBP + (byte)0xc);
+    c.mov(vm::EAX, vm::ptr(vm::EAX));
+    c.add(vm::EAX, vm::EDX);
+    c.pop(vm::EBP);
     c.ret();
 
     f = c.compile();
     std::cout << f.dump() << "\n";
-    std::cout << f.invoke() << "\n";
+    int a = 3, b = 4;
+    std::cout << f.invoke(2, &a, &b) << "\n";
 
     return 0;
 }
