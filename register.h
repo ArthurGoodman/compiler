@@ -33,6 +33,7 @@ public:
     Register(RegisterValue value);
 
     bool isAddress() const;
+    Register &makeAddress();
 
     Disp getDisp() const;
     byte getDispSize() const;
@@ -48,4 +49,6 @@ Register operator+(RegisterValue value, int disp);
 
 Register operator-(RegisterValue value, byte disp);
 Register operator-(RegisterValue value, int disp);
+
+Register ptr(const Register &reg);
 }

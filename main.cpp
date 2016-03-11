@@ -26,7 +26,15 @@ int main() {
     std::cout << f.dump() << "\n";
     std::cout << f.invoke({4, 5}) << "\n";
 
-    std::cout << c.compile().dump() << "\n";
+    c.push(vm::EBP);
+    c.mov(vm::EBP, vm::ESP);
+    c.lea(vm::EAX, vm::ptr(vm::EAX));
+    c.leave();
+    c.ret();
+
+    f = c.compile();
+    std::cout << f.dump() << "\n";
+    std::cout << f.invoke() << "\n";
 
     return 0;
 }

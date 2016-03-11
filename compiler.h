@@ -21,6 +21,7 @@ public:
     void pop(const Register &reg);
 
     void mov(const Register &dst, const Register &src);
+    void lea(const Register &dst, const Register &src);
 
     void add(const Register &op1, const Register &op2);
 

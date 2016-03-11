@@ -18,6 +18,13 @@ void Compiler::mov(const Register &dst, const Register &src) {
     regRMInstruction(0x89, dst, src);
 }
 
+void Compiler::lea(const Register &dst, const Register &src) {
+    if (!src.isAddress())
+        return;
+
+    regRMInstruction(0x8b, dst, src);
+}
+
 void Compiler::add(const Register &op1, const Register &op2) {
     regRMInstruction(0x1, op1, op2);
 }
@@ -40,7 +47,7 @@ Function Compiler::compile() {
 
 void Compiler::regRMInstruction(byte op, const Register &op1, const Register &op2) {
     if (op1.isAddress() && op2.isAddress()) {
-        std::cerr << "error: to many memory references\n";
+        std::cerr << "error: too many memory references\n";
         return;
     }
 
@@ -55,6 +62,7 @@ void Compiler::regRMInstruction(byte op, const Register &op1, const Register &op
 
     switch (rm.getDispSize()) {
     case 0:
+        modRegRM(Disp0, op1, op2);
         break;
 
     case 1:

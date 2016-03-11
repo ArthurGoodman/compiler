@@ -9,6 +9,11 @@ bool Register::isAddress() const {
     return address;
 }
 
+Register &Register::makeAddress() {
+    address = true;
+    return *this;
+}
+
 Register::Disp Register::getDisp() const {
     return disp;
 }
@@ -55,5 +60,9 @@ Register operator-(RegisterValue value, byte disp) {
 
 Register operator-(RegisterValue value, int disp) {
     return Register(value) + -disp;
+}
+
+Register ptr(const Register &reg) {
+    return Register(reg).makeAddress();
 }
 }
