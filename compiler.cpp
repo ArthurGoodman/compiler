@@ -1,6 +1,6 @@
 #include "compiler.h"
 
-#include <iostream>
+#include <cassert>
 
 namespace vm {
 Compiler::Compiler() {
@@ -41,8 +41,7 @@ void Compiler::mov(const Register &dst, RegisterValue src) {
 }
 
 void Compiler::lea(const Register &dst, const Register &src) {
-    if (!src.isAddress())
-        return;
+    assert(src.isAddress() && "src should be an address");
 
     regRMInstruction(0x8d - 0x2, dst, src);
 }
@@ -100,12 +99,9 @@ Function Compiler::compile() {
 }
 
 void Compiler::regRMInstruction(byte op, const Register &op1, const Register &op2) {
-    if (op1.isAddress() && op2.isAddress()) {
-        std::cerr << "error: too many memory references\n";
-        return;
-    }
+    assert(!op1.isAddress() || !op2.isAddress() && "too many memory references");
 
-    f.gen((byte)(op + (op1.isAddress() || !op2.isAddress() ? 0x0 : 0x2)));
+    f.gen((byte)(op + (op2.isAddress() && !op1.isAddress() ? 0x2 : 0x0)));
 
     if (!op1.isAddress() && !op2.isAddress()) {
         modRegRM(Reg, op2, op1);

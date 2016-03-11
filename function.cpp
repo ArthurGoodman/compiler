@@ -42,10 +42,12 @@ int Function::invoke(int n, ...) {
 int Function::invoke(const std::vector<int> &args) {
     int (*f)() = (int (*)())code.getData();
 
+    const int *argsData = args.data();
+
     for (int i = args.size() - 1; i >= 0; i--)
         asm("push %0\n"
             :
-            : "g"(args[i]));
+            : "g"(argsData[i]));
 
     int r = f();
 

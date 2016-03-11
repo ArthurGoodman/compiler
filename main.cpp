@@ -16,7 +16,7 @@ int main() {
 
     f = c.compile();
     std::cout << f.dump() << "\n";
-    std::cout << f.invoke(2, 1, 2) << "\n";
+    std::cout << f.invoke(2, 1, 3) << "\n";
 
     c.push(vm::EBP);
     c.mov(vm::EBP, vm::ESP);
@@ -31,7 +31,7 @@ int main() {
     f = c.compile();
     std::cout << f.dump() << "\n";
     int a = 3, b = 4;
-    std::cout << f.invoke(2, &a, &b) << "\n";
+    std::cout << f.invoke({(int)&a, (int)&b}) << "\n";
 
     return 0;
 }
