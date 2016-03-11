@@ -99,7 +99,7 @@ Function Compiler::compile() {
 }
 
 void Compiler::regRMInstruction(byte op, const Register &op1, const Register &op2) {
-    assert(!op1.isAddress() || !op2.isAddress() && "too many memory references");
+    assert((!op1.isAddress() || !op2.isAddress()) && "too many memory references");
 
     f.gen((byte)(op + (op2.isAddress() && !op1.isAddress() ? 0x2 : 0x0)));
 
