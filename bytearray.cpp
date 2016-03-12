@@ -1,7 +1,6 @@
 #include "bytearray.h"
 
 #include <memory>
-#include <cmath>
 
 uint ByteArray::initialCapacity = 1;
 
@@ -55,20 +54,9 @@ ByteArray &ByteArray::operator=(ByteArray &&array) {
     return *this;
 }
 
-#include <iostream>
-
 byte *ByteArray::allocate(uint count) {
     if (!enoughSpace(count)) {
-        uint newCapacity = capacity;
-
-        if (!newCapacity)
-            newCapacity = initialCapacity;
-
-        newCapacity *= pow(2, std::max(0.0, ceil(log2(double(size + count) / newCapacity))));
-
-        std::cout << newCapacity << "\n";
-        std::cout << ceilToPowerof2(size + count) << "\n";
-        std::cout << "\n";
+        uint newCapacity = ceilToPowerof2(std::max(initialCapacity, size + count));
 
         byte *newData = (byte *)realloc(data, newCapacity);
 

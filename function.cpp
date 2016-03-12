@@ -45,13 +45,13 @@ int Function::invoke(const std::vector<int> &args) {
     const int *argsData = args.data();
 
     for (int i = args.size() - 1; i >= 0; i--)
-        asm("push %0\n"
+        asm("push %0"
             :
             : "g"(argsData[i]));
 
     int r = f();
 
-    asm("add esp,%0\n"
+    asm("add esp,%0"
         :
         : "g"(args.size() * sizeof(int)));
 
