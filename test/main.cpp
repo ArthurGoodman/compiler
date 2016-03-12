@@ -10,7 +10,7 @@ int main() {
     unit::TestRunner runner;
 
     runner.addTest(new MovTest);
-    //    runner.addTest(new AddTest);
+    runner.addTest(new AddTest);
 
     runner.run();
 
