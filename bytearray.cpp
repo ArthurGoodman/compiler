@@ -67,7 +67,8 @@ byte *ByteArray::allocate(uint count) {
         newCapacity *= pow(2, std::max(0.0, ceil(log2(double(size + count) / newCapacity))));
 
         std::cout << newCapacity << "\n";
-        std::cout << ceilToPowerof2((capacity == 1 ? 0 : capacity) + count) << "\n";
+        std::cout << ceilToPowerof2(size + count) << "\n";
+        std::cout << "\n";
 
         byte *newData = (byte *)realloc(data, newCapacity);
 
