@@ -6,10 +6,6 @@ CONFIG -= qt
 LIBS += -L../compiler/release -lcompiler
 LIBS += -L../../unit/release -lunit
 
-DEPENDPATH += \
-    ../compiler \
-    ../../unit
-
 INCLUDEPATH += \
     ../compiler \
     ../../unit
