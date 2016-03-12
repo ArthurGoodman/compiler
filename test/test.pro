@@ -12,13 +12,18 @@ for (var, $$list($$fromfile(../compiler/compiler.pro, SOURCES))) {
 LIBS += -L../../unit/release -lunit
 
 DEPENDPATH += \
-    ../compiler
+    ../compiler \
+    ../../unit
 
 INCLUDEPATH += \
     ../compiler \
     ../../unit
 
 SOURCES += \
-    main.cpp
+    main.cpp \
+    movtest.cpp \
+    addtest.cpp
 
-HEADERS +=
+HEADERS += \
+    movtest.h \
+    addtest.h
