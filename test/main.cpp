@@ -4,13 +4,13 @@
 #include "movtest.h"
 #include "addtest.h"
 
-#include "compiler.h"
+//#include "compiler.h"
 
 int main() {
     unit::TestRunner runner;
 
     runner.addTest(new MovTest);
-    runner.addTest(new AddTest);
+    //    runner.addTest(new AddTest);
 
     runner.run();
 
