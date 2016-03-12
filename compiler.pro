@@ -9,7 +9,8 @@ SOURCES += main.cpp \
     compiler.cpp \
     function.cpp \
     bytearray.cpp \
-    register.cpp
+    register.cpp \
+    common.cpp
 
 HEADERS += \
     compiler.h \

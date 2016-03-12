@@ -42,3 +42,5 @@ inline double fromString<double>(const std::string &str) {
 
     return t;
 }
+
+uint ceilToPowerof2(uint n);
