@@ -1,10 +1,8 @@
 #pragma once
 
-#include "test.h"
+#include "testset.h"
 
-class MovTest : public unit::Test {
-    static MovTest test;
-
+class MovTest : public unit::TestSet {
 public:
-    void run();
+    MovTest();
 };
