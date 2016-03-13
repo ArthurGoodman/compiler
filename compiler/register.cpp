@@ -1,28 +1,27 @@
 #include "register.h"
 
-namespace vm {
-Register::Register(RegisterValue value)
+vm::Register::Register(RegisterValue value)
     : value(value), address(false), dispSize(0) {
 }
 
-bool Register::isAddress() const {
+bool vm::Register::isAddress() const {
     return address;
 }
 
-Register &Register::makeAddress() {
+vm::Register &vm::Register::makeAddress() {
     address = true;
     return *this;
 }
 
-Register::Disp Register::getDisp() const {
+vm::Register::Disp vm::Register::getDisp() const {
     return disp;
 }
 
-byte Register::getDispSize() const {
+byte vm::Register::getDispSize() const {
     return dispSize;
 }
 
-Register Register::operator+(byte disp) const {
+vm::Register vm::Register::operator+(byte disp) const {
     Register reg(value);
 
     reg.address = true;
@@ -32,7 +31,7 @@ Register Register::operator+(byte disp) const {
     return reg;
 }
 
-Register Register::operator+(int disp) const {
+vm::Register vm::Register::operator+(int disp) const {
     Register reg(value);
 
     reg.address = true;
@@ -42,27 +41,26 @@ Register Register::operator+(int disp) const {
     return reg;
 }
 
-Register::operator byte() const {
+vm::Register::operator byte() const {
     return value;
 }
 
-Register operator+(RegisterValue value, byte disp) {
-    return Register(value) + disp;
+vm::Register vm::operator+(RegisterValue value, byte disp) {
+    return vm::Register(value) + disp;
 }
 
-Register operator+(RegisterValue value, int disp) {
-    return Register(value) + disp;
+vm::Register vm::operator+(RegisterValue value, int disp) {
+    return vm::Register(value) + disp;
 }
 
-Register operator-(RegisterValue value, byte disp) {
-    return Register(value) + (byte)-disp;
+vm::Register vm::operator-(RegisterValue value, byte disp) {
+    return vm::Register(value) + (byte)-disp;
 }
 
-Register operator-(RegisterValue value, int disp) {
-    return Register(value) + -disp;
+vm::Register vm::operator-(RegisterValue value, int disp) {
+    return vm::Register(value) + -disp;
 }
 
-Register ptr(const Register &reg) {
-    return Register(reg).makeAddress();
-}
+vm::Register vm::ptr(const Register &reg) {
+    return vm::Register(reg).makeAddress();
 }

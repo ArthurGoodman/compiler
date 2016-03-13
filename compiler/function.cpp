@@ -1,28 +1,27 @@
 #include "function.h"
 
-namespace vm {
-Function::Function() {
+vm::Function::Function() {
 }
 
-Function::Function(const Function &f)
+vm::Function::Function(const Function &f)
     : code(f.code) {
 }
 
-Function::Function(Function &&f)
+vm::Function::Function(Function &&f)
     : code(std::move(f.code)) {
 }
 
-Function &Function::operator=(const Function &f) {
+vm::Function &vm::Function::operator=(const Function &f) {
     code = f.code;
     return *this;
 }
 
-Function &Function::operator=(Function &&f) {
+vm::Function &vm::Function::operator=(Function &&f) {
     code = std::move(f.code);
     return *this;
 }
 
-int Function::invoke(int n, ...) {
+int vm::Function::invoke(int n, ...) {
     int (*f)() = (int (*)())code.getData();
 
     for (int *i = &n + n; i > &n; i--)
@@ -39,7 +38,7 @@ int Function::invoke(int n, ...) {
     return r;
 }
 
-int Function::invoke(const std::vector<int> &args) {
+int vm::Function::invoke(const std::vector<int> &args) {
     int (*f)() = (int (*)())code.getData();
 
     const int *argsData = args.data();
@@ -58,16 +57,15 @@ int Function::invoke(const std::vector<int> &args) {
     return r;
 }
 
-byte *Function::getCode() {
+byte *vm::Function::getCode() {
     return code.getData();
 }
 
-std::string Function::dump() {
+std::string vm::Function::dump() {
     std::string result;
 
     for (uint i = 0; i < code.getSize(); i++)
         result += (i > 0 ? code[i] < 0x10 ? " 0" : " " : "") + toString((int)code[i], 0x10, 0);
 
     return result;
-}
 }
