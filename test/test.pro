@@ -6,6 +6,8 @@ CONFIG -= qt
 LIBS += -L../compiler/release -lcompiler
 LIBS += -L../../unit/release -lunit
 
+PRE_TARGETDEPS += ../compiler/release/libcompiler.a
+
 INCLUDEPATH += \
     ../compiler \
     ../../unit

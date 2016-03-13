@@ -46,21 +46,21 @@ vm::Register::operator byte() const {
 }
 
 vm::Register vm::operator+(RegisterValue value, byte disp) {
-    return vm::Register(value) + disp;
+    return Register(value) + disp;
 }
 
 vm::Register vm::operator+(RegisterValue value, int disp) {
-    return vm::Register(value) + disp;
+    return Register(value) + disp;
 }
 
 vm::Register vm::operator-(RegisterValue value, byte disp) {
-    return vm::Register(value) + (byte)-disp;
+    return Register(value) + (byte)-disp;
 }
 
 vm::Register vm::operator-(RegisterValue value, int disp) {
-    return vm::Register(value) + -disp;
+    return Register(value) + -disp;
 }
 
 vm::Register vm::ptr(const Register &reg) {
-    return vm::Register(reg).makeAddress();
+    return Register(reg).makeAddress();
 }
