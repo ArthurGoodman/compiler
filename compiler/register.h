@@ -29,6 +29,9 @@ class Register {
     Disp disp;
     byte dispSize;
 
+    RegisterValue scaledValue;
+    int scale;
+
 public:
     Register(RegisterValue value);
 
@@ -40,6 +43,11 @@ public:
 
     Register operator+(byte disp) const;
     Register operator+(int disp) const;
+
+    Register operator*(int scale) const;
+
+    RegisterValue getValue();
+    RegisterValue getScaledValue();
 
     operator byte() const;
 };

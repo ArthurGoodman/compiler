@@ -41,6 +41,23 @@ vm::Register vm::Register::operator+(int disp) const {
     return reg;
 }
 
+vm::Register vm::Register::operator*(int scale) const {
+    Register reg(value);
+
+    reg.address = true;
+    reg.scale = scale;
+
+    return reg;
+}
+
+vm::RegisterValue vm::Register::getValue() {
+    return value;
+}
+
+vm::RegisterValue vm::Register::getScaledValue() {
+    return scaledValue;
+}
+
 vm::Register::operator byte() const {
     return value;
 }

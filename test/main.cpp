@@ -1,9 +1,9 @@
 #include <iostream>
 
 #include "testrunner.h"
+#include "pushpoptest.h"
 #include "movtest.h"
 #include "addtest.h"
-#include "pushpoptest.h"
 
 //#include "compiler.h"
 
