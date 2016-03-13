@@ -13,8 +13,10 @@ INCLUDEPATH += \
 SOURCES += \
     main.cpp \
     movtest.cpp \
-    addtest.cpp
+    addtest.cpp \
+    pushpoptest.cpp
 
 HEADERS += \
     movtest.h \
-    addtest.h
+    addtest.h \
+    pushpoptest.h

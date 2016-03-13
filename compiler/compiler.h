@@ -18,6 +18,10 @@ public:
     Compiler();
 
     void push(const Register &reg);
+    void push(byte value);
+    void push(int value);
+    void push(RegisterValue reg);
+
     void pop(const Register &reg);
 
     void mov(const Register &dst, const Register &src);

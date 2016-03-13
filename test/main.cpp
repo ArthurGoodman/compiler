@@ -3,12 +3,14 @@
 #include "testrunner.h"
 #include "movtest.h"
 #include "addtest.h"
+#include "pushpoptest.h"
 
 //#include "compiler.h"
 
 int main() {
     unit::TestRunner runner;
 
+    runner.addTest(new PushPopTest);
     runner.addTest(new MovTest);
     runner.addTest(new AddTest);
 

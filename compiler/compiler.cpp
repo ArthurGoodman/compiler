@@ -7,11 +7,31 @@ Compiler::Compiler() {
 }
 
 void Compiler::push(const Register &reg) {
-    f.gen((byte)(0x50 + reg));
+    if (reg.isAddress())
+        regRMInstruction(0xff, reg, vm::ESI);
+    else
+        f.gen((byte)(0x50 + reg));
+}
+
+void Compiler::push(byte value) {
+    f.gen((byte)0x6a);
+    f.gen(value);
+}
+
+void Compiler::push(int value) {
+    f.gen((byte)0x68);
+    f.gen(value);
+}
+
+void Compiler::push(RegisterValue reg) {
+    push(Register(reg));
 }
 
 void Compiler::pop(const Register &reg) {
-    f.gen((byte)(0x58 + reg));
+    if (reg.isAddress())
+        regRMInstruction(0x8f, reg, vm::EAX);
+    else
+        f.gen((byte)(0x58 + reg));
 }
 
 void Compiler::mov(const Register &dst, const Register &src) {
