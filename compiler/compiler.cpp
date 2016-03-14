@@ -121,7 +121,7 @@ vm::Function vm::Compiler::compile() {
 void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const MemoryReference &op2) {
     assert(!(op1.isAddress() && op2.isAddress()) && "too many memory references");
 
-    f.gen((byte)(op + (op2.isAddress() && !op1.isAddress() ? 0x2 : 0x0)));
+    f.gen((byte)(op + (op2.isAddress() ? 0x2 : 0x0)));
 
     if (!op1.isAddress() && !op2.isAddress()) {
         modRegRM(Reg, op2, op1);
@@ -135,7 +135,7 @@ void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const M
     case 0:
         if (rm.getScale() != 0) {
             modRegRM(Disp0, r, ESP);
-            modRegRM((Mod)log2(rm.getScale()), rm.getIndex(), rm.getBase());
+            modRegRM(log2(rm.getScale()), rm.getIndex(), rm.getBase());
         } else
             modRegRM(Disp0, r, rm);
         break;
@@ -143,7 +143,7 @@ void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const M
     case 1:
         if (rm.getScale() != 0) {
             modRegRM(Disp8, r, ESP);
-            modRegRM((Mod)log2(rm.getScale()), rm.getIndex(), rm.getBase());
+            modRegRM(log2(rm.getScale()), rm.getIndex(), rm.getBase());
         } else
             modRegRM(Disp8, r, rm);
         f.gen((byte)rm.getDisp());
@@ -154,7 +154,7 @@ void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const M
             modRegRM(Disp0, r, EBP);
         else if (rm.getScale() != 0) {
             modRegRM(Disp32, r, ESP);
-            modRegRM((Mod)log2(rm.getScale()), rm.getIndex(), rm.getBase());
+            modRegRM(log2(rm.getScale()), rm.getIndex(), rm.getBase());
         } else
             modRegRM(Disp32, r, rm);
         f.gen(rm.getDisp());
@@ -165,10 +165,6 @@ void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const M
     }
 }
 
-void vm::Compiler::modRegRM(Mod mod, const MemoryReference &reg, const MemoryReference &rm) {
-    f.gen(compose(mod, reg, rm));
-}
-
-byte vm::Compiler::compose(byte first, byte second, byte third) {
-    return first << 6 | second << 3 | third;
+void vm::Compiler::modRegRM(byte mod, byte reg, byte rm) {
+    f.gen((byte)(mod << 6 | reg << 3 | rm));
 }

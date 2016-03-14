@@ -50,8 +50,6 @@ public:
 
 private:
     void regRMInstruction(byte op, const MemoryReference &op1, const MemoryReference &op2);
-
-    void modRegRM(Mod mod, const MemoryReference &reg, const MemoryReference &rm);
-    byte compose(byte first, byte second, byte third);
+    void modRegRM(byte mod, byte reg, byte rm);
 };
 }
