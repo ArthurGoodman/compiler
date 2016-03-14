@@ -137,12 +137,12 @@ void vm::Compiler::regRMInstruction(byte op, const Register &op1, const Register
 
     case 1:
         modRegRM(Disp8, r, rm);
-        f.gen(rm.getDisp().as.Byte);
+        f.gen((byte)rm.getDisp());
         break;
 
     case 4:
         modRegRM(Disp32, r, rm);
-        f.gen(rm.getDisp().as.Int);
+        f.gen(rm.getDisp());
         break;
 
     default:
