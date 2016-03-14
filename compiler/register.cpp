@@ -109,6 +109,10 @@ vm::Register vm::operator+(RegisterValue base, T disp) {
     return Register(base, disp);
 }
 
+vm::Register vm::operator+(vm::RegisterValue base, const vm::Register &reg) {
+    return Register(base) + reg;
+}
+
 template <class T>
 vm::Register vm::operator+(const Register &reg, T disp) {
     return Register(reg.getScale(), reg.getIndex(), reg.getBase(), disp);
@@ -124,10 +128,18 @@ vm::Register vm::operator-(const Register &reg, T disp) {
     return Register(reg.getScale(), reg.getIndex(), reg.getBase(), (T)-disp);
 }
 
-vm::Register vm::operator*(RegisterValue index, uint scale) {
+vm::Register vm::operator*(RegisterValue index, int scale) {
     return Register(scale, index);
 }
 
 vm::Register vm::ptr(const Register &reg) {
     return Register(reg).makeAddress();
+}
+
+vm::Register vm::ptr(vm::RegisterValue base) {
+    return Register(base).makeAddress();
+}
+
+vm::Register vm::ptr(int disp) {
+    return Register(NOREG, disp);
 }

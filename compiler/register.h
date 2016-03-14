@@ -62,6 +62,8 @@ private:
 template <class T>
 Register operator+(RegisterValue base, T disp);
 
+Register operator+(RegisterValue base, const Register &reg);
+
 template <class T>
 Register operator+(const Register &reg, T disp);
 
@@ -71,7 +73,9 @@ Register operator-(RegisterValue base, T disp);
 template <class T>
 Register operator-(const Register &reg, T disp);
 
-Register operator*(RegisterValue index, uint scale);
+Register operator*(RegisterValue index, int scale);
 
 Register ptr(const Register &reg);
+Register ptr(RegisterValue base);
+Register ptr(int disp);
 }
