@@ -6,7 +6,10 @@
 #include "bytearray.h"
 
 namespace vm {
-class Function {
+class Function;
+}
+
+class vm::Function {
     friend class Compiler;
 
     ByteArray code;
@@ -33,7 +36,6 @@ private:
 };
 
 template <class T>
-void Function::gen(T value) {
+void vm::Function::gen(T value) {
     code.push(value);
-}
 }

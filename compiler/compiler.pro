@@ -12,11 +12,11 @@ SOURCES += \
     common.cpp \
     compiler.cpp \
     function.cpp \
-    memoryreference.cpp
+    memref.cpp
 
 HEADERS += \
     bytearray.h \
     common.h \
     compiler.h \
     function.h \
-    memoryreference.h
+    memref.h

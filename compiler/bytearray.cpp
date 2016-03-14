@@ -56,7 +56,7 @@ ByteArray &ByteArray::operator=(ByteArray &&array) {
 
 byte *ByteArray::allocate(uint count) {
     if (!enoughSpace(count)) {
-        uint newCapacity = ceilToPowerof2(std::max(initialCapacity, size + count));
+        uint newCapacity = ceilToPowerOf2(std::max(initialCapacity, size + count));
 
         byte *newData = (byte *)realloc(data, newCapacity);
 
