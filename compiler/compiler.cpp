@@ -6,11 +6,11 @@
 vm::Compiler::Compiler() {
 }
 
-void vm::Compiler::push(const MemoryReference &reg) {
-    if (reg.isAddress())
-        regRMInstruction(0xff, reg, ESI);
+void vm::Compiler::push(const MemoryReference &ref) {
+    if (ref.isAddress())
+        regRMInstruction(0xff, ref, ESI);
     else
-        f.gen((byte)(0x50 + reg));
+        f.gen((byte)(0x50 + ref));
 }
 
 void vm::Compiler::push(byte value) {
@@ -27,31 +27,31 @@ void vm::Compiler::push(Register reg) {
     push(MemoryReference(reg));
 }
 
-void vm::Compiler::pop(const MemoryReference &reg) {
-    if (reg.isAddress())
-        regRMInstruction(0x8f, reg, EAX);
+void vm::Compiler::pop(const MemoryReference &ref) {
+    if (ref.isAddress())
+        regRMInstruction(0x8f, ref, EAX);
     else
-        f.gen((byte)(0x58 + reg));
+        f.gen((byte)(0x58 + ref));
 }
 
 void vm::Compiler::mov(const MemoryReference &dst, const MemoryReference &src) {
     regRMInstruction(0x89, dst, src);
 }
 
-void vm::Compiler::mov(const MemoryReference &reg, byte value) {
-    if (reg.isAddress())
-        regRMInstruction(0xc7, reg, EAX);
+void vm::Compiler::mov(const MemoryReference &ref, byte value) {
+    if (ref.isAddress())
+        regRMInstruction(0xc7, ref, EAX);
     else
-        f.gen((byte)(0xb0 + reg));
+        f.gen((byte)(0xb0 + ref));
 
     f.gen(value);
 }
 
-void vm::Compiler::mov(const MemoryReference &reg, int value) {
-    if (reg.isAddress())
-        regRMInstruction(0xc7, reg, EAX);
+void vm::Compiler::mov(const MemoryReference &ref, int value) {
+    if (ref.isAddress())
+        regRMInstruction(0xc7, ref, EAX);
     else
-        f.gen((byte)(0xb8 + reg));
+        f.gen((byte)(0xb8 + ref));
 
     f.gen(value);
 }
@@ -70,13 +70,13 @@ void vm::Compiler::add(const MemoryReference &op1, const MemoryReference &op2) {
     regRMInstruction(0x1, op1, op2);
 }
 
-void vm::Compiler::add(const MemoryReference &reg, byte value) {
-    regRMInstruction(0x83, reg, EAX);
+void vm::Compiler::add(const MemoryReference &ref, byte value) {
+    regRMInstruction(0x83, ref, EAX);
     f.gen(value);
 }
 
-void vm::Compiler::add(const MemoryReference &reg, int value) {
-    regRMInstruction(0x81, reg, EAX);
+void vm::Compiler::add(const MemoryReference &ref, int value) {
+    regRMInstruction(0x81, ref, EAX);
     f.gen(value);
 }
 
@@ -88,13 +88,13 @@ void vm::Compiler::sub(const MemoryReference &op1, const MemoryReference &op2) {
     regRMInstruction(0x29, op1, op2);
 }
 
-void vm::Compiler::sub(const MemoryReference &reg, byte value) {
-    regRMInstruction(0x83, reg, EBP);
+void vm::Compiler::sub(const MemoryReference &ref, byte value) {
+    regRMInstruction(0x83, ref, EBP);
     f.gen(value);
 }
 
-void vm::Compiler::sub(const MemoryReference &reg, int value) {
-    regRMInstruction(0x83, reg, EBP);
+void vm::Compiler::sub(const MemoryReference &ref, int value) {
+    regRMInstruction(0x83, ref, EBP);
     f.gen(value);
 }
 
@@ -167,9 +167,6 @@ void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const M
 
 void vm::Compiler::modRegRM(Mod mod, const MemoryReference &reg, const MemoryReference &rm) {
     f.gen(compose(mod, reg, rm));
-
-    //    if (rm == ESP && mod != Reg)
-    //        f.gen(compose(0, rm, rm));
 }
 
 byte vm::Compiler::compose(byte first, byte second, byte third) {

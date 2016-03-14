@@ -17,28 +17,28 @@ class Compiler {
 public:
     Compiler();
 
-    void push(const MemoryReference &reg);
+    void push(const MemoryReference &ref);
     void push(byte value);
     void push(int value);
     void push(Register reg);
 
-    void pop(const MemoryReference &reg);
+    void pop(const MemoryReference &ref);
 
     void mov(const MemoryReference &dst, const MemoryReference &src);
-    void mov(const MemoryReference &reg, byte value);
-    void mov(const MemoryReference &reg, int value);
+    void mov(const MemoryReference &ref, byte value);
+    void mov(const MemoryReference &ref, int value);
     void mov(const MemoryReference &dst, Register src);
 
     void lea(const MemoryReference &dst, const MemoryReference &src);
 
     void add(const MemoryReference &op1, const MemoryReference &op2);
-    void add(const MemoryReference &reg, byte value);
-    void add(const MemoryReference &reg, int value);
+    void add(const MemoryReference &ref, byte value);
+    void add(const MemoryReference &ref, int value);
     void add(const MemoryReference &op1, Register op2);
 
     void sub(const MemoryReference &op1, const MemoryReference &op2);
-    void sub(const MemoryReference &reg, byte value);
-    void sub(const MemoryReference &reg, int value);
+    void sub(const MemoryReference &ref, byte value);
+    void sub(const MemoryReference &ref, int value);
     void sub(const MemoryReference &op1, Register op2);
 
     void leave();
