@@ -65,7 +65,7 @@ std::string vm::Function::dump() {
     std::string result;
 
     for (uint i = 0; i < code.getSize(); i++)
-        result += (i > 0 ? code[i] < 0x10 ? " 0" : " " : "") + toString((int)code[i], 0x10, 0);
+        result += (i > 0 ? code[i] < 0x10 ? " 0" : " " : code[i] < 0x10 ? "0" : "") + toString((int)code[i], 0x10, 0);
 
     return result;
 }

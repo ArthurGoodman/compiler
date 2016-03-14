@@ -23,12 +23,12 @@ AddTest::AddTest()
     $("add DWORD PTR [ebx+0x1],0x1", "83 43 01 01", [=]() { c.add(vm::EBX + (byte)0x1, (byte)0x1); dump(); });
     $("add DWORD PTR [ebx+0x100],0x1", "83 83 00 01 00 00 01", [=]() { c.add(vm::EBX + 0x100, (byte)0x1); dump(); });
     $("add DWORD PTR [ebx+ebx*2],0x1", "83 04 5b 01", [=]() { c.add(vm::EBX + vm::EBX * 2, (byte)0x1); dump(); });
-    $("add DWORD PTR [ebx+ebx*2+0x1],0x1", "83 44 5b 01 01", [=]() { c.add(vm::EBX + vm::EBX * 2 + (byte)0x1, vm::EBX); dump(); });
-    $("add DWORD PTR [ebx],0x100", "81 03 00 01 00 00", [=]() { c.add(vm::ptr(vm::EBX), 0x1); dump(); });
+    $("add DWORD PTR [ebx+ebx*2+0x1],0x1", "83 44 5b 01 01", [=]() { c.add(vm::EBX + vm::EBX * 2 + (byte)0x1, (byte)0x1); dump(); });
+    $("add DWORD PTR [ebx],0x100", "81 03 00 01 00 00", [=]() { c.add(vm::ptr(vm::EBX), 0x100); dump(); });
     $("add DWORD PTR [ebx+0x1],0x100", "81 43 01 00 01 00 00", [=]() { c.add(vm::EBX + (byte)0x1, 0x100); dump(); });
     $("add DWORD PTR [ebx+0x100],0x100", "81 83 00 01 00 00 00 01 00 00", [=]() { c.add(vm::EBX + 0x100, 0x100); dump(); });
     $("add DWORD PTR [ebx+ebx*2],0x100", "81 04 5b 00 01 00 00", [=]() { c.add(vm::EBX + vm::EBX * 2, 0x100); dump(); });
-    $("add DWORD PTR [ebx+ebx*2+0x1],0x100", "81 44 5b 01 00 01 00", [=]()  { c.add(vm::EBX + vm::EBX * 2 + (byte)0x1, 0x100); dump(); });
+    $("add DWORD PTR [ebx+ebx*2+0x1],0x100", "81 44 5b 01 00 01 00 00", [=]()  { c.add(vm::EBX + vm::EBX * 2 + (byte)0x1, 0x100); dump(); });
 }
 
 void AddTest::dump() {

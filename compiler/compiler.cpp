@@ -6,7 +6,7 @@
 vm::Compiler::Compiler() {
 }
 
-void vm::Compiler::push(const Register &reg) {
+void vm::Compiler::push(const MemoryReference &reg) {
     if (reg.isAddress())
         regRMInstruction(0xff, reg, ESI);
     else
@@ -23,22 +23,22 @@ void vm::Compiler::push(int value) {
     f.gen(value);
 }
 
-void vm::Compiler::push(RegisterValue reg) {
-    push(Register(reg));
+void vm::Compiler::push(Register reg) {
+    push(MemoryReference(reg));
 }
 
-void vm::Compiler::pop(const Register &reg) {
+void vm::Compiler::pop(const MemoryReference &reg) {
     if (reg.isAddress())
         regRMInstruction(0x8f, reg, EAX);
     else
         f.gen((byte)(0x58 + reg));
 }
 
-void vm::Compiler::mov(const Register &dst, const Register &src) {
+void vm::Compiler::mov(const MemoryReference &dst, const MemoryReference &src) {
     regRMInstruction(0x89, dst, src);
 }
 
-void vm::Compiler::mov(const Register &reg, byte value) {
+void vm::Compiler::mov(const MemoryReference &reg, byte value) {
     if (reg.isAddress())
         regRMInstruction(0xc7, reg, EAX);
     else
@@ -47,7 +47,7 @@ void vm::Compiler::mov(const Register &reg, byte value) {
     f.gen(value);
 }
 
-void vm::Compiler::mov(const Register &reg, int value) {
+void vm::Compiler::mov(const MemoryReference &reg, int value) {
     if (reg.isAddress())
         regRMInstruction(0xc7, reg, EAX);
     else
@@ -56,50 +56,50 @@ void vm::Compiler::mov(const Register &reg, int value) {
     f.gen(value);
 }
 
-void vm::Compiler::mov(const Register &dst, RegisterValue src) {
-    mov(dst, Register(src));
+void vm::Compiler::mov(const MemoryReference &dst, Register src) {
+    mov(dst, MemoryReference(src));
 }
 
-void vm::Compiler::lea(const Register &dst, const Register &src) {
+void vm::Compiler::lea(const MemoryReference &dst, const MemoryReference &src) {
     assert(src.isAddress() && "src should be an address");
 
     regRMInstruction(0x8d - 0x2, dst, src);
 }
 
-void vm::Compiler::add(const Register &op1, const Register &op2) {
+void vm::Compiler::add(const MemoryReference &op1, const MemoryReference &op2) {
     regRMInstruction(0x1, op1, op2);
 }
 
-void vm::Compiler::add(const Register &reg, byte value) {
+void vm::Compiler::add(const MemoryReference &reg, byte value) {
     regRMInstruction(0x83, reg, EAX);
     f.gen(value);
 }
 
-void vm::Compiler::add(const Register &reg, int value) {
-    regRMInstruction(0x83, reg, EAX);
+void vm::Compiler::add(const MemoryReference &reg, int value) {
+    regRMInstruction(0x81, reg, EAX);
     f.gen(value);
 }
 
-void vm::Compiler::add(const Register &op1, RegisterValue op2) {
-    add(op1, Register(op2));
+void vm::Compiler::add(const MemoryReference &op1, Register op2) {
+    add(op1, MemoryReference(op2));
 }
 
-void vm::Compiler::sub(const Register &op1, const Register &op2) {
+void vm::Compiler::sub(const MemoryReference &op1, const MemoryReference &op2) {
     regRMInstruction(0x29, op1, op2);
 }
 
-void vm::Compiler::sub(const Register &reg, byte value) {
+void vm::Compiler::sub(const MemoryReference &reg, byte value) {
     regRMInstruction(0x83, reg, EBP);
     f.gen(value);
 }
 
-void vm::Compiler::sub(const Register &reg, int value) {
+void vm::Compiler::sub(const MemoryReference &reg, int value) {
     regRMInstruction(0x83, reg, EBP);
     f.gen(value);
 }
 
-void vm::Compiler::sub(const Register &op1, RegisterValue op2) {
-    sub(op1, Register(op2));
+void vm::Compiler::sub(const MemoryReference &op1, Register op2) {
+    sub(op1, MemoryReference(op2));
 }
 
 void vm::Compiler::leave() {
@@ -118,7 +118,7 @@ vm::Function vm::Compiler::compile() {
     return std::move(f);
 }
 
-void vm::Compiler::regRMInstruction(byte op, const Register &op1, const Register &op2) {
+void vm::Compiler::regRMInstruction(byte op, const MemoryReference &op1, const MemoryReference &op2) {
     assert(!(op1.isAddress() && op2.isAddress()) && "too many memory references");
 
     f.gen((byte)(op + (op2.isAddress() && !op1.isAddress() ? 0x2 : 0x0)));
@@ -128,8 +128,8 @@ void vm::Compiler::regRMInstruction(byte op, const Register &op1, const Register
         return;
     }
 
-    const Register &r = op1.isAddress() ? op2 : op1;
-    const Register &rm = op1.isAddress() ? op1 : op2;
+    const MemoryReference &r = op1.isAddress() ? op2 : op1;
+    const MemoryReference &rm = op1.isAddress() ? op1 : op2;
 
     switch (rm.getDispSize()) {
     case 0:
@@ -165,7 +165,7 @@ void vm::Compiler::regRMInstruction(byte op, const Register &op1, const Register
     }
 }
 
-void vm::Compiler::modRegRM(Mod mod, const Register &reg, const Register &rm) {
+void vm::Compiler::modRegRM(Mod mod, const MemoryReference &reg, const MemoryReference &rm) {
     f.gen(compose(mod, reg, rm));
 
     //    if (rm == ESP && mod != Reg)

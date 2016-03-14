@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function.h"
-#include "register.h"
+#include "memoryreference.h"
 
 namespace vm {
 class Compiler {
@@ -17,29 +17,29 @@ class Compiler {
 public:
     Compiler();
 
-    void push(const Register &reg);
+    void push(const MemoryReference &reg);
     void push(byte value);
     void push(int value);
-    void push(RegisterValue reg);
+    void push(Register reg);
 
-    void pop(const Register &reg);
+    void pop(const MemoryReference &reg);
 
-    void mov(const Register &dst, const Register &src);
-    void mov(const Register &reg, byte value);
-    void mov(const Register &reg, int value);
-    void mov(const Register &dst, RegisterValue src);
+    void mov(const MemoryReference &dst, const MemoryReference &src);
+    void mov(const MemoryReference &reg, byte value);
+    void mov(const MemoryReference &reg, int value);
+    void mov(const MemoryReference &dst, Register src);
 
-    void lea(const Register &dst, const Register &src);
+    void lea(const MemoryReference &dst, const MemoryReference &src);
 
-    void add(const Register &op1, const Register &op2);
-    void add(const Register &reg, byte value);
-    void add(const Register &reg, int value);
-    void add(const Register &op1, RegisterValue op2);
+    void add(const MemoryReference &op1, const MemoryReference &op2);
+    void add(const MemoryReference &reg, byte value);
+    void add(const MemoryReference &reg, int value);
+    void add(const MemoryReference &op1, Register op2);
 
-    void sub(const Register &op1, const Register &op2);
-    void sub(const Register &reg, byte value);
-    void sub(const Register &reg, int value);
-    void sub(const Register &op1, RegisterValue op2);
+    void sub(const MemoryReference &op1, const MemoryReference &op2);
+    void sub(const MemoryReference &reg, byte value);
+    void sub(const MemoryReference &reg, int value);
+    void sub(const MemoryReference &op1, Register op2);
 
     void leave();
     void ret();
@@ -49,9 +49,9 @@ public:
     Function compile();
 
 private:
-    void regRMInstruction(byte op, const Register &op1, const Register &op2);
+    void regRMInstruction(byte op, const MemoryReference &op1, const MemoryReference &op2);
 
-    void modRegRM(Mod mod, const Register &reg, const Register &rm);
+    void modRegRM(Mod mod, const MemoryReference &reg, const MemoryReference &rm);
     byte compose(byte first, byte second, byte third);
 };
 }
