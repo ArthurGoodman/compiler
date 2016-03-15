@@ -26,6 +26,10 @@ vm::MemRef vm::operator+(Register base, const MemRef &ref) {
     return MemRef(base) + ref;
 }
 
+vm::MemRef vm::operator+(const vm::MemRef &ref, vm::Register base) {
+    return ref + MemRef(base);
+}
+
 template <class T>
 vm::MemRef vm::operator-(Register base, T disp) {
     return MemRef(base, (T)-disp);

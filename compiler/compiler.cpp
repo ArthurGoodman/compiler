@@ -3,9 +3,6 @@
 #include <cassert>
 #include <cmath>
 
-vm::Compiler::Compiler() {
-}
-
 void vm::Compiler::push(const MemRef &ref) {
     if (ref.isAddress())
         regRMInstruction(0xff, ref, ESI);

@@ -1,14 +1,8 @@
 #pragma once
 
-#include "testset.h"
-#include "compiler.h"
+#include "compilertest.h"
 
-class AddTest : public unit::TestSet {
-    vm::Compiler c;
-
+class AddTest : public CompilerTest {
 public:
     AddTest();
-
-private:
-    void dump();
 };

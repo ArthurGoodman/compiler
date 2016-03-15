@@ -25,6 +25,7 @@ template <class T>
 MemRef operator+(const MemRef &ref, T disp);
 
 MemRef operator+(Register base, const MemRef &ref);
+MemRef operator+(const MemRef &ref, Register base);
 
 template <class T>
 MemRef operator-(Register base, T disp);

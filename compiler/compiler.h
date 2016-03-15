@@ -18,8 +18,6 @@ class vm::Compiler {
     Function f;
 
 public:
-    Compiler();
-
     void push(const MemRef &ref);
     void push(byte value);
     void push(int value);

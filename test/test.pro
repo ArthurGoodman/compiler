@@ -16,9 +16,11 @@ SOURCES += \
     main.cpp \
     movtest.cpp \
     addtest.cpp \
-    pushpoptest.cpp
+    pushpoptest.cpp \
+    compilertest.cpp
 
 HEADERS += \
     movtest.h \
     addtest.h \
-    pushpoptest.h
+    pushpoptest.h \
+    compilertest.h

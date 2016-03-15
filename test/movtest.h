@@ -1,14 +1,8 @@
 #pragma once
 
-#include "testset.h"
-#include "compiler.h"
+#include "compilertest.h"
 
-class MovTest : public unit::TestSet {
-    vm::Compiler c;
-
+class MovTest : public CompilerTest {
 public:
     MovTest();
-
-private:
-    void dump();
 };
