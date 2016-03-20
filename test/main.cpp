@@ -7,14 +7,27 @@
 
 //#include "compiler.h"
 
-int main() {
-    unit::TestRunner runner;
+unit::TestRunner runner;
 
-    runner.addTest(new PushPopTest);
-    runner.addTest(new MovTest);
-    runner.addTest(new AddTest);
+void f() {
+    runner.$("test", []() {
+              //std::cout << "lel";
+              return 0;
+          }).should.be.ok(); //print("lel");
+}
+
+int main() {
+    f();
 
     runner.run();
+
+    //    unit::TestRunner runner;
+
+    //    runner.addTest(new PushPopTest);
+    //    runner.addTest(new MovTest);
+    //    runner.addTest(new AddTest);
+
+    //    runner.run();
 
     //    vm::Compiler c;
     //    vm::Function f;
