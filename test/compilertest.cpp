@@ -10,5 +10,5 @@ void CompilerTest::$(const std::string &name, const std::string &result, const s
     TestSet::$(name, [=]() {
         f();
         std::cout << c.compile().dump();
-    }).should.print(result);
+    })->should.print(result);
 }
