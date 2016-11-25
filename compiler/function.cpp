@@ -31,7 +31,7 @@ int vm::Function::invoke(int n, ...) {
 
     int r = f();
 
-    asm("add esp,%0"
+    asm("add %0, %%esp"
         :
         : "g"(n * sizeof(int)));
 
@@ -50,7 +50,7 @@ int vm::Function::invoke(const std::vector<int> &args) {
 
     int r = f();
 
-    asm("add esp,%0"
+    asm("add %0, %%esp"
         :
         : "g"(args.size() * sizeof(int)));
 
