@@ -13,16 +13,13 @@ ByteArray::ByteArray()
 }
 
 ByteArray::ByteArray(const ByteArray &array)
-    : size(array.size), capacity(array.capacity) {
-    data = (byte *)malloc(capacity);
-    memcpy(data, array.data, size);
+    : data(0) {
+    *this = array;
 }
 
 ByteArray::ByteArray(ByteArray &&array)
-    : size(array.size), capacity(array.capacity), data(array.data) {
-    array.data = 0;
-    array.size = 0;
-    array.capacity = 0;
+    : data(0) {
+    *this = std::move(array);
 }
 
 ByteArray::~ByteArray() {
@@ -34,6 +31,7 @@ ByteArray &ByteArray::operator=(const ByteArray &array) {
     capacity = array.capacity;
 
     ::free(data);
+
     data = (byte *)malloc(capacity);
     memcpy(data, array.data, size);
 
@@ -45,6 +43,7 @@ ByteArray &ByteArray::operator=(ByteArray &&array) {
     capacity = array.capacity;
 
     ::free(data);
+
     data = array.data;
 
     array.data = 0;
@@ -74,6 +73,9 @@ byte *ByteArray::allocate(uint count) {
 
 int ByteArray::reallocate() {
     byte *newData = (byte *)malloc(capacity);
+
+    if (!newData)
+        return 0;
 
     memcpy(newData, data, size);
 

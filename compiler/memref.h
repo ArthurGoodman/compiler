@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-namespace vm {
+namespace x86 {
 enum Register {
     NOREG = -1,
 
@@ -39,7 +39,7 @@ MemRef ptr(Register base);
 MemRef ptr(int disp);
 }
 
-class vm::MemRef {
+class x86::MemRef {
     bool address;
 
     int scale;

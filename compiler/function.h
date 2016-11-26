@@ -5,11 +5,11 @@
 
 #include "bytearray.h"
 
-namespace vm {
+namespace x86 {
 class Function;
 }
 
-class vm::Function {
+class x86::Function {
     friend class Compiler;
 
     ByteArray code;
@@ -36,6 +36,6 @@ private:
 };
 
 template <class T>
-void vm::Function::gen(T value) {
+void x86::Function::gen(T value) {
     code.push(value);
 }

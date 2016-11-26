@@ -5,7 +5,7 @@
 
 class CompilerTest : public unit::TestSet {
 protected:
-    vm::Compiler c;
+    x86::Compiler c;
 
 public:
     CompilerTest(const std::string &name);

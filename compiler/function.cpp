@@ -1,27 +1,27 @@
 #include "function.h"
 
-vm::Function::Function() {
+x86::Function::Function() {
 }
 
-vm::Function::Function(const Function &f)
+x86::Function::Function(const Function &f)
     : code(f.code) {
 }
 
-vm::Function::Function(Function &&f)
+x86::Function::Function(Function &&f)
     : code(std::move(f.code)) {
 }
 
-vm::Function &vm::Function::operator=(const Function &f) {
+x86::Function &x86::Function::operator=(const Function &f) {
     code = f.code;
     return *this;
 }
 
-vm::Function &vm::Function::operator=(Function &&f) {
+x86::Function &x86::Function::operator=(Function &&f) {
     code = std::move(f.code);
     return *this;
 }
 
-int vm::Function::invoke(int n, ...) {
+int x86::Function::invoke(int n, ...) {
     int (*f)() = (int (*)())code.getData();
 
     for (int *i = &n + n; i > &n; i--)
@@ -38,7 +38,7 @@ int vm::Function::invoke(int n, ...) {
     return r;
 }
 
-int vm::Function::invoke(const std::vector<int> &args) {
+int x86::Function::invoke(const std::vector<int> &args) {
     int (*f)() = (int (*)())code.getData();
 
     const int *argsData = args.data();
@@ -57,11 +57,11 @@ int vm::Function::invoke(const std::vector<int> &args) {
     return r;
 }
 
-byte *vm::Function::getCode() {
+byte *x86::Function::getCode() {
     return code.getData();
 }
 
-std::string vm::Function::dump() {
+std::string x86::Function::dump() {
     std::string result;
 
     for (uint i = 0; i < code.getSize(); i++)
