@@ -4,12 +4,11 @@
 #include "memref.h"
 
 #include <map>
+#include <cstring>
 
 namespace x86 {
-class Compiler;
-}
 
-class x86::Compiler {
+class Compiler {
     struct __attribute__((packed)) DosHeader {
         uint16_t magic;
         uint16_t usedBytesInTheLastPage;
@@ -26,8 +25,8 @@ class x86::Compiler {
         uint16_t addressOfRelocationTable;
         uint16_t overlayNumber;
         uint16_t reserved[4];
-        uint16_t oEMid;
-        uint16_t oEMinfo;
+        uint16_t OEMid;
+        uint16_t OEMinfo;
         uint16_t reserved2[10];
         uint32_t addressOfNewExeHeader;
     };
@@ -110,6 +109,7 @@ class x86::Compiler {
         IAT,
         DELAY_IMPORT_DESCRIPTOR,
         CLR_RUNTIME_HEADER,
+        RESERVED,
 
         NUM_DATA_DIRECTORIES
     };
@@ -176,7 +176,7 @@ class x86::Compiler {
         uint32_t sizeOfHeapCommit;
         uint32_t loaderFlags;
         uint32_t numberOfRvaAndSizes;
-        DataDirectory dataDirectory[16];
+        DataDirectory dataDirectory[NUM_DATA_DIRECTORIES];
     };
 
     struct __attribute__((packed)) NTHeaders {
@@ -368,24 +368,24 @@ class x86::Compiler {
     };
 
     enum SectionID {
-        SectionText,
-        SectionEdata,
-        SectionIdata,
-        SectionRdata,
-        SectionData,
-        SectionBss,
-        SectionReloc
+        TEXT,
+        EDATA,
+        IDATA,
+        RDATA,
+        DATA,
+        BSS,
+        RELOC
     };
 
-    struct Function {
-        std::string name;
-        int offset;
-    };
+    //    struct Function {
+    //        std::string name;
+    //        uint offset;
+    //    };
 
     struct Symbol {
         std::string name;
         std::string baseSymbol;
-        int offset;
+        uint offset;
     };
 
     enum SymRefType {
@@ -403,7 +403,7 @@ class x86::Compiler {
 
     std::vector<std::string> exports;
     std::map<std::string, std::vector<std::string>> imports;
-    std::vector<Function> functions;
+    //    std::vector<Function> functions;
     std::vector<Symbol> symbols;
     std::vector<SymRef> refs;
 
@@ -415,38 +415,91 @@ class x86::Compiler {
     };
 
 public:
-    //    void push(const MemRef &ref);
-    //    void push(byte value);
-    //    void push(int value);
-    //    void push(Register reg);
+    void rdata(const std::string &name, const byte *data, uint size);
 
-    //    void pop(const MemRef &ref);
+    template <class T>
+    void rdata(const std::string &name, T data);
 
-    //    void mov(const MemRef &dst, const MemRef &src);
-    //    void mov(const MemRef &ref, byte value);
-    //    void mov(const MemRef &ref, int value);
-    //    void mov(const MemRef &dst, Register src);
+    void data(const std::string &name, const byte *data, uint size);
 
-    //    void lea(const MemRef &dst, const MemRef &src);
+    template <class T>
+    void data(const std::string &name, T data);
 
-    //    void add(const MemRef &op1, const MemRef &op2);
-    //    void add(const MemRef &ref, byte value);
-    //    void add(const MemRef &ref, int value);
-    //    void add(const MemRef &op1, Register op2);
+    void bss(const std::string &name, uint size);
 
-    //    void sub(const MemRef &op1, const MemRef &op2);
-    //    void sub(const MemRef &ref, byte value);
-    //    void sub(const MemRef &ref, int value);
-    //    void sub(const MemRef &op1, Register op2);
+    void external(const std::string &name);
 
-    //    void leave();
-    //    void ret();
+    void function(const std::string &name);
 
-    //    void nop();
+    void push(const MemRef &ref);
+    void push(byte value);
+    void push(int value);
+    void push(Register reg);
+
+    void pop(const MemRef &ref);
+
+    void mov(const MemRef &dst, const MemRef &src);
+    void mov(const MemRef &ref, byte value);
+    void mov(const MemRef &ref, int value);
+    void mov(const MemRef &dst, Register src);
+
+    void lea(const MemRef &dst, const MemRef &src);
+
+    void add(const MemRef &op1, const MemRef &op2);
+    void add(const MemRef &ref, byte value);
+    void add(const MemRef &ref, int value);
+    void add(const MemRef &op1, Register op2);
+
+    void sub(const MemRef &op1, const MemRef &op2);
+    void sub(const MemRef &ref, byte value);
+    void sub(const MemRef &ref, int value);
+    void sub(const MemRef &op1, Register op2);
+
+    void leave();
+    void ret();
+
+    void nop();
 
     //    Function compile();
 
+    ByteArray writeOBJ() const;
+    ByteArray writeEXE() const;
+    ByteArray writeDLL(const std::string &name) const;
+
 private:
-    //    void regRMInstruction(byte op, const MemRef &op1, const MemRef &op2);
-    //    void modRegRM(byte mod, byte reg, byte rm);
+    void regRMInstruction(byte op, const MemRef &op1, const MemRef &op2);
+    void modRegRM(byte mod, byte reg, byte rm);
+
+    template <class T>
+    void gen(T value);
+
+    ByteArray &section(SectionID id);
+
+    void pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset);
 };
+
+template <class T>
+void Compiler::gen(T value) {
+    section(TEXT).push(value);
+}
+
+template <class T>
+void Compiler::rdata(const std::string &name, T data) {
+    rdata(name, (const byte *)&data, sizeof(data));
+}
+
+template <>
+inline void Compiler::rdata(const std::string &name, const char *data) {
+    rdata(name, (const byte *)data, strlen(data));
+}
+
+template <class T>
+void Compiler::data(const std::string &name, T data) {
+    Compiler::data(name, (const byte *)&data, sizeof(data));
+}
+
+template <>
+inline void Compiler::data(const std::string &name, const char *data) {
+    Compiler::data(name, (const byte *)data, strlen(data));
+}
+}

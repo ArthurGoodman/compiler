@@ -5,8 +5,8 @@
 class ByteArray {
     static uint initialCapacity;
 
-    uint size, capacity;
-    byte *data;
+    uint _size, _capacity;
+    byte *_data;
 
 public:
     static void setInitialCapacity(uint initialCapacity);
@@ -30,6 +30,8 @@ public:
     template <class T>
     T pop();
 
+    void push(const byte *data, uint size);
+
     byte &operator[](int index);
 
     bool free(uint count);
@@ -37,9 +39,11 @@ public:
 
     bool enoughSpace(uint count) const;
 
-    byte *getData() const;
-    uint getSize() const;
-    uint getCapacity() const;
+    byte *data() const;
+    uint size() const;
+    uint capacity() const;
+
+    void write(const std::string &fileName) const;
 };
 
 template <class T>
@@ -51,5 +55,5 @@ ByteArray &ByteArray::push(T value) {
 template <class T>
 T ByteArray::pop() {
     free(sizeof(T));
-    return *(T *)(data + size);
+    return *(T *)(_data + _size);
 }

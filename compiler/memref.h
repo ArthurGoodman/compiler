@@ -37,9 +37,8 @@ MemRef operator*(Register index, int scale);
 
 MemRef ptr(Register base);
 MemRef ptr(int disp);
-}
 
-class x86::MemRef {
+class MemRef {
     bool address;
 
     int scale;
@@ -72,3 +71,4 @@ public:
 private:
     MemRef(int scale, Register index, Register base, int disp, int dispSize);
 };
+}

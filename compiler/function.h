@@ -6,10 +6,8 @@
 #include "bytearray.h"
 
 namespace x86 {
-class Function;
-}
 
-class x86::Function {
+class Function {
     friend class Compiler;
 
     ByteArray code;
@@ -36,6 +34,7 @@ private:
 };
 
 template <class T>
-void x86::Function::gen(T value) {
+void Function::gen(T value) {
     code.push(value);
+}
 }
