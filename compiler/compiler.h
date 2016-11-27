@@ -186,7 +186,7 @@ class Compiler {
     };
 
     struct __attribute__((packed)) SectionHeader {
-        uint8_t name[8];
+        char name[8];
         uint32_t virtualSize;
         uint32_t virtualAddress;
         uint32_t sizeOfRawData;
@@ -473,9 +473,13 @@ private:
     template <class T>
     void gen(T value);
 
+    bool isSectionDefined(SectionID id) const;
     ByteArray &section(SectionID id);
+    const ByteArray &section(SectionID id) const;
 
     void pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset);
+
+    //    static const char *sectionIDToName(SectionID id);
 };
 
 template <class T>

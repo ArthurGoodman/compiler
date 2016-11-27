@@ -147,6 +147,82 @@ void Compiler::nop() {
 
 ByteArray Compiler::writeOBJ() const {
     ByteArray image;
+
+    FileHeader fileHeader = {};
+
+    fileHeader.machine = IMAGE_FILE_MACHINE_I386;
+    fileHeader.characteristics = IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_LINE_NUMS_STRIPPED;
+
+    std::map<SectionID, SectionHeader> sectionHeaders;
+
+    if (isSectionDefined(TEXT)) {
+        fileHeader.numberOfSections++;
+
+        SectionHeader header = {};
+
+        strcat(header.name, ".text");
+        header.sizeOfRawData = section(TEXT).size();
+        header.pointerToRawData = 0;
+        header.pointerToRelocations = 0;
+        header.numberOfRelocations = 0;
+        header.characteristics = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
+
+        sectionHeaders[TEXT] = header;
+    }
+
+    if (isSectionDefined(RDATA)) {
+        fileHeader.numberOfSections++;
+
+        SectionHeader header = {};
+
+        strcat(header.name, ".rdata");
+        header.sizeOfRawData = section(RDATA).size();
+        header.pointerToRawData = 0;
+        header.characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA;
+
+        sectionHeaders[RDATA] = header;
+    }
+
+    if (isSectionDefined(DATA)) {
+        fileHeader.numberOfSections++;
+
+        SectionHeader header = {};
+
+        strcat(header.name, ".data");
+        header.sizeOfRawData = section(DATA).size();
+        header.pointerToRawData = 0;
+        header.characteristics = IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA;
+
+        sectionHeaders[DATA] = header;
+    }
+
+    if (isSectionDefined(BSS)) {
+        fileHeader.numberOfSections++;
+
+        SectionHeader header = {};
+
+        strcat(header.name, ".bss");
+        header.sizeOfRawData = section(BSS).size();
+        header.pointerToRawData = 0;
+        header.characteristics = IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+
+        sectionHeaders[BSS] = header;
+    }
+
+    std::vector<SymbolTableEntry> symbolTable;
+
+    // ...
+
+    image.push(fileHeader);
+
+    for (auto &sectionHeader : sectionHeaders) {
+        sectionHeader.second.pointerToRawData = 0;
+        image.push(sectionHeader.second);
+    }
+
+    for (auto &section : sections)
+        image.push(section.second);
+
     return image;
 }
 
@@ -211,14 +287,50 @@ void Compiler::modRegRM(byte mod, byte reg, byte rm) {
     gen((byte)(mod << 6 | reg << 3 | rm));
 }
 
+bool Compiler::isSectionDefined(Compiler::SectionID id) const {
+    return sections.find(id) != sections.end();
+}
+
 ByteArray &Compiler::section(SectionID id) {
-    if (sections.find(id) == sections.end())
+    if (!isSectionDefined(id))
         sections[id] = ByteArray();
 
+    return sections.at(id);
+}
+
+const ByteArray &Compiler::section(Compiler::SectionID id) const {
     return sections.at(id);
 }
 
 void Compiler::pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset) {
     symbols << Symbol{name, baseSymbol, offset};
 }
+
+//const char *Compiler::sectionIDToName(SectionID id) {
+//    switch (id) {
+//    case TEXT:
+//        return ".text";
+
+//    case EDATA:
+//        return ".edata";
+
+//    case IDATA:
+//        return ".idata";
+
+//    case RDATA:
+//        return ".rdata";
+
+//    case DATA:
+//        return ".data";
+
+//    case BSS:
+//        return ".bss";
+
+//    case RELOC:
+//        return ".reloc";
+
+//    default:
+//        return 0;
+//    }
+//}
 }

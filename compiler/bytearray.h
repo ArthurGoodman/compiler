@@ -52,6 +52,12 @@ ByteArray &ByteArray::push(T value) {
     return *this;
 }
 
+template <>
+inline ByteArray &ByteArray::push(ByteArray array) {
+    memcpy(allocate(array.size()), array.data(), array.size());
+    return *this;
+}
+
 template <class T>
 T ByteArray::pop() {
     free(sizeof(T));
