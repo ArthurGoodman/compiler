@@ -368,7 +368,7 @@ class Compiler {
     };
 
     enum SectionID {
-        TEXT,
+        TEXT = 1,
         DATA,
         BSS,
         RDATA,
@@ -377,13 +377,7 @@ class Compiler {
         RELOC
     };
 
-    //    struct Function {
-    //        std::string name;
-    //        uint offset;
-    //    };
-
     struct Symbol {
-        std::string name;
         std::string baseSymbol;
         uint offset;
     };
@@ -401,14 +395,23 @@ class Compiler {
         SymRef operator+(int offset) const;
     };
 
+    struct Reloc {
+        std::string name;
+        SymRefType type;
+        uint offset;
+    };
+
     std::map<SectionID, ByteArray> sections;
 
     std::vector<std::string> exports;
     std::map<std::string, std::vector<std::string>> imports;
-    //    std::vector<Function> functions;
-    std::vector<std::string> definedSymbols;
-    std::vector<Symbol> symbols;
-    std::vector<SymRef> refs;
+    std::map<std::string, Symbol> symbols;
+    std::vector<Reloc> relocs;
+
+    std::vector<std::string> funcs;
+    std::vector<std::string> sectionNames;
+    std::vector<std::string> externFuncs;
+    std::vector<std::string> externVars;
 
     enum Mod {
         Disp0,
@@ -430,7 +433,8 @@ public:
 
     void bss(const std::string &name, uint size);
 
-    void external(const std::string &name);
+    void externalFunction(const std::string &name);
+    void externalVariable(const std::string &name);
 
     void function(const std::string &name);
 
@@ -442,6 +446,11 @@ public:
     void push(int value);
     void push(const SymRef &ref);
     void push(Register reg);
+
+    void call(const MemRef &ref);
+    void call(int value);
+    void call(const SymRef &ref);
+    void call(Register reg);
 
     void pop(const MemRef &ref);
 
@@ -487,6 +496,7 @@ private:
 
     bool isSymbolDefined(const std::string &name) const;
     void pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset);
+    void pushReloc(const Reloc &reloc);
 
     //    static const char *sectionIDToName(SectionID id);
 };

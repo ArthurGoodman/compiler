@@ -7,14 +7,14 @@ int main() {
 
     c.rdata("string", "Hello, World!");
 
-    c.external("puts");
+    c.externalFunction("puts");
 
     c.function("f");
 
     c.push(x86::EBP);
     c.mov(x86::EBP, x86::ESP);
     c.push(c.abs("string"));
-    c.nop(); // c.call(0);
+    c.call(c.rel("puts"));
     c.leave();
     c.ret();
 

@@ -54,7 +54,7 @@ ByteArray &ByteArray::push(T value) {
 
 template <>
 inline ByteArray &ByteArray::push(ByteArray array) {
-    memcpy(allocate(array.size()), array.data(), array.size());
+    push(array.data(), array.size());
     return *this;
 }
 

@@ -31,12 +31,19 @@ void Compiler::bss(const std::string &name, uint size) {
     pushSymbol(name, ".bss", offset);
 }
 
-void Compiler::external(const std::string &name) {
+void Compiler::externalFunction(const std::string &name) {
     pushSymbol(name, "_" + name, 0);
+    externFuncs << name;
+}
+
+void Compiler::externalVariable(const std::string &name) {
+    pushSymbol(name, "_" + name, 0);
+    externVars << name;
 }
 
 void Compiler::function(const std::string &name) {
     pushSymbol(name, ".text", section(TEXT).size());
+    funcs << name;
 }
 
 Compiler::SymRef Compiler::abs(const std::string &name) const {
@@ -68,11 +75,43 @@ void Compiler::push(const SymRef &ref) {
     if (!isSymbolDefined(ref.name))
         throw std::runtime_error("undefined symbol '" + ref.name + "'");
 
-    // ...
+    gen((byte)0x68);
+
+    uint offset = sectionSize(TEXT);
+
+    gen(ref.offset);
+
+    pushReloc(Reloc{ref.name, ref.type, offset});
 }
 
 void Compiler::push(Register reg) {
     push(MemRef(reg));
+}
+
+void Compiler::call(const MemRef &ref) {
+    regRMInstruction(0xff, ref, EDX);
+}
+
+void Compiler::call(int value) {
+    gen((byte)0xe8);
+    gen(value);
+}
+
+void Compiler::call(const SymRef &ref) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    gen((byte)0xe8);
+
+    uint offset = sectionSize(TEXT);
+
+    gen(ref.offset);
+
+    pushReloc(Reloc{ref.name, ref.type, offset});
+}
+
+void Compiler::call(Register reg) {
+    call(MemRef(reg));
 }
 
 void Compiler::pop(const MemRef &ref) {
@@ -220,19 +259,79 @@ ByteArray Compiler::writeOBJ() const {
     sectionHeaders << header;
 
     sectionHeaders[0].pointerToRelocations = ptr;
-    sectionHeaders[0].numberOfRelocations = refs.size();
+    sectionHeaders[0].numberOfRelocations = relocs.size();
 
+    std::vector<RelocationDirective> textRelocs;
     std::vector<SymbolTableEntry> symbolTable;
+    std::vector<std::string> symbolNames;
+    uint stringTableSize = 0;
+    ByteArray stringTable;
 
-    // ...
+    for (const std::string &func : funcs) {
+        SymbolTableEntry entry = {};
+
+        strcat(entry.e.name, ("_" + func).data());
+        entry.value = symbols.at(func).offset;
+        entry.sectionNumber = TEXT;
+        entry.type = IMAGE_SYM_DTYPE_FUNCTION << SCT_COMPLEX_TYPE_SHIFT;
+        entry.storageClass = IMAGE_SYM_CLASS_EXTERNAL;
+
+        symbolTable << entry;
+        symbolNames << entry.e.name;
+    }
+
+    uint sectionNumber = 1;
+    for (auto &header : sectionHeaders) {
+        SymbolTableEntry entry = {};
+
+        strcat(entry.e.name, header.name);
+        entry.sectionNumber = sectionNumber++;
+        entry.type = IMAGE_SYM_TYPE_NULL;
+        entry.storageClass = IMAGE_SYM_CLASS_STATIC;
+
+        symbolTable << entry;
+        symbolNames << entry.e.name;
+    }
+
+    for (const std::string &func : externFuncs) {
+        SymbolTableEntry entry = {};
+
+        strcat(entry.e.name, ("_" + func).data());
+        entry.sectionNumber = IMAGE_SYM_UNDEFINED;
+        entry.type = IMAGE_SYM_DTYPE_FUNCTION << SCT_COMPLEX_TYPE_SHIFT;
+        entry.storageClass = IMAGE_SYM_CLASS_EXTERNAL;
+
+        symbolTable << entry;
+        symbolNames << entry.e.name;
+    }
+
+    for (auto &reloc : relocs) {
+        RelocationDirective dir = {};
+
+        dir.virtualAddress = reloc.offset;
+        dir.symbolIndex = find(symbolNames.begin(), symbolNames.end(), symbols.at(reloc.name).baseSymbol) - symbolNames.begin();
+        dir.type = reloc.type == RefRel ? IMAGE_REL_I386_REL32 : IMAGE_REL_I386_DIR32;
+
+        textRelocs << dir;
+    }
+
+    fileHeader.pointerToSymbolTable = ptr + relocs.size() * sizeof(RelocationDirective);
+    fileHeader.numberOfSymbols = symbolTable.size();
 
     image.push(fileHeader);
 
-    for (auto &sectionHeader : sectionHeaders)
-        image.push(sectionHeader);
+    image.push((byte *)sectionHeaders.data(), sectionHeaders.size() * sizeof(SectionHeader));
 
     for (auto &section : sections)
         image.push(section.second);
+
+    image.push((byte *)textRelocs.data(), textRelocs.size() * sizeof(RelocationDirective));
+    image.push((byte *)symbolTable.data(), symbolTable.size() * sizeof(SymbolTableEntry));
+
+    if (stringTableSize > 0) {
+        image.push(stringTableSize);
+        image.push(stringTable);
+    }
 
     return image;
 }
@@ -318,15 +417,18 @@ const ByteArray &Compiler::section(SectionID id) const {
 }
 
 bool Compiler::isSymbolDefined(const std::string &name) const {
-    return std::find(std::begin(definedSymbols), std::end(definedSymbols), name) != std::end(definedSymbols);
+    return symbols.find(name) != symbols.end();
 }
 
 void Compiler::pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset) {
     if (isSymbolDefined(name))
         throw std::runtime_error("symbol '" + name + "' is already defined");
 
-    definedSymbols << name;
-    symbols << Symbol{name, baseSymbol, offset};
+    symbols[name] = Symbol{baseSymbol, offset};
+}
+
+void Compiler::pushReloc(const Reloc &reloc) {
+    relocs << reloc;
 }
 
 //const char *Compiler::sectionIDToName(SectionID id) {
