@@ -369,11 +369,11 @@ class Compiler {
 
     enum SectionID {
         TEXT,
-        EDATA,
-        IDATA,
-        RDATA,
         DATA,
         BSS,
+        RDATA,
+        EDATA,
+        IDATA,
         RELOC
     };
 
@@ -397,6 +397,8 @@ class Compiler {
         std::string name;
         SymRefType type;
         int offset;
+
+        SymRef operator+(int offset) const;
     };
 
     std::map<SectionID, ByteArray> sections;
@@ -404,6 +406,7 @@ class Compiler {
     std::vector<std::string> exports;
     std::map<std::string, std::vector<std::string>> imports;
     //    std::vector<Function> functions;
+    std::vector<std::string> definedSymbols;
     std::vector<Symbol> symbols;
     std::vector<SymRef> refs;
 
@@ -431,9 +434,13 @@ public:
 
     void function(const std::string &name);
 
+    SymRef abs(const std::string &name) const;
+    SymRef rel(const std::string &name) const;
+
     void push(const MemRef &ref);
     void push(byte value);
     void push(int value);
+    void push(const SymRef &ref);
     void push(Register reg);
 
     void pop(const MemRef &ref);
@@ -474,9 +481,11 @@ private:
     void gen(T value);
 
     bool isSectionDefined(SectionID id) const;
+    uint sectionSize(SectionID id) const;
     ByteArray &section(SectionID id);
     const ByteArray &section(SectionID id) const;
 
+    bool isSymbolDefined(const std::string &name) const;
     void pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset);
 
     //    static const char *sectionIDToName(SectionID id);

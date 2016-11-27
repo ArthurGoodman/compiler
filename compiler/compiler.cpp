@@ -4,8 +4,14 @@
 
 #include <cassert>
 #include <cmath>
+#include <algorithm>
+#include <exception>
 
 namespace x86 {
+
+Compiler::SymRef Compiler::SymRef::operator+(int offset) const {
+    return SymRef{name, type, this->offset + offset};
+}
 
 void Compiler::rdata(const std::string &name, const byte *data, uint size) {
     uint offset = section(RDATA).size();
@@ -33,6 +39,14 @@ void Compiler::function(const std::string &name) {
     pushSymbol(name, ".text", section(TEXT).size());
 }
 
+Compiler::SymRef Compiler::abs(const std::string &name) const {
+    return SymRef{name, RefAbs, 0};
+}
+
+Compiler::SymRef Compiler::rel(const std::string &name) const {
+    return SymRef{name, RefRel, 0};
+}
+
 void Compiler::push(const MemRef &ref) {
     if (ref.isAddress())
         regRMInstruction(0xff, ref, ESI);
@@ -48,6 +62,13 @@ void Compiler::push(byte value) {
 void Compiler::push(int value) {
     gen((byte)0x68);
     gen(value);
+}
+
+void Compiler::push(const SymRef &ref) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    // ...
 }
 
 void Compiler::push(Register reg) {
@@ -151,63 +172,55 @@ ByteArray Compiler::writeOBJ() const {
     FileHeader fileHeader = {};
 
     fileHeader.machine = IMAGE_FILE_MACHINE_I386;
+    fileHeader.numberOfSections = 4;
     fileHeader.characteristics = IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_LINE_NUMS_STRIPPED;
 
-    std::map<SectionID, SectionHeader> sectionHeaders;
+    uint ptr = sizeof(fileHeader) + fileHeader.numberOfSections * sizeof(SectionHeader);
 
-    if (isSectionDefined(TEXT)) {
-        fileHeader.numberOfSections++;
+    std::vector<SectionHeader> sectionHeaders;
 
-        SectionHeader header = {};
+    SectionHeader header = {};
 
-        strcat(header.name, ".text");
-        header.sizeOfRawData = section(TEXT).size();
-        header.pointerToRawData = 0;
-        header.pointerToRelocations = 0;
-        header.numberOfRelocations = 0;
-        header.characteristics = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
+    strcat(header.name, ".text");
+    header.sizeOfRawData = sectionSize(TEXT);
+    header.pointerToRawData = ptr;
+    header.characteristics = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE;
 
-        sectionHeaders[TEXT] = header;
-    }
+    ptr += header.sizeOfRawData;
+    sectionHeaders << header;
 
-    if (isSectionDefined(RDATA)) {
-        fileHeader.numberOfSections++;
+    header = {};
 
-        SectionHeader header = {};
+    strcat(header.name, ".data");
+    header.sizeOfRawData = sectionSize(DATA);
+    header.pointerToRawData = header.sizeOfRawData ? ptr : 0;
+    header.characteristics = IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA;
 
-        strcat(header.name, ".rdata");
-        header.sizeOfRawData = section(RDATA).size();
-        header.pointerToRawData = 0;
-        header.characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA;
+    ptr += header.sizeOfRawData;
+    sectionHeaders << header;
 
-        sectionHeaders[RDATA] = header;
-    }
+    header = {};
 
-    if (isSectionDefined(DATA)) {
-        fileHeader.numberOfSections++;
+    strcat(header.name, ".bss");
+    header.sizeOfRawData = sectionSize(BSS);
+    header.pointerToRawData = header.sizeOfRawData ? ptr : 0;
+    header.characteristics = IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_UNINITIALIZED_DATA;
 
-        SectionHeader header = {};
+    ptr += header.sizeOfRawData;
+    sectionHeaders << header;
 
-        strcat(header.name, ".data");
-        header.sizeOfRawData = section(DATA).size();
-        header.pointerToRawData = 0;
-        header.characteristics = IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA;
+    header = {};
 
-        sectionHeaders[DATA] = header;
-    }
+    strcat(header.name, ".rdata");
+    header.sizeOfRawData = sectionSize(RDATA);
+    header.pointerToRawData = header.sizeOfRawData ? ptr : 0;
+    header.characteristics = IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA;
 
-    if (isSectionDefined(BSS)) {
-        fileHeader.numberOfSections++;
+    ptr += header.sizeOfRawData;
+    sectionHeaders << header;
 
-        SectionHeader header = {};
-
-        strcat(header.name, ".bss");
-        header.sizeOfRawData = section(BSS).size();
-        header.pointerToRawData = 0;
-        header.characteristics = IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_UNINITIALIZED_DATA;
-
-        sectionHeaders[BSS] = header;
-    }
+    sectionHeaders[0].pointerToRelocations = ptr;
+    sectionHeaders[0].numberOfRelocations = refs.size();
 
     std::vector<SymbolTableEntry> symbolTable;
 
@@ -215,10 +228,8 @@ ByteArray Compiler::writeOBJ() const {
 
     image.push(fileHeader);
 
-    for (auto &sectionHeader : sectionHeaders) {
-        sectionHeader.second.pointerToRawData = 0;
-        image.push(sectionHeader.second);
-    }
+    for (auto &sectionHeader : sectionHeaders)
+        image.push(sectionHeader);
 
     for (auto &section : sections)
         image.push(section.second);
@@ -287,8 +298,12 @@ void Compiler::modRegRM(byte mod, byte reg, byte rm) {
     gen((byte)(mod << 6 | reg << 3 | rm));
 }
 
-bool Compiler::isSectionDefined(Compiler::SectionID id) const {
+bool Compiler::isSectionDefined(SectionID id) const {
     return sections.find(id) != sections.end();
+}
+
+uint Compiler::sectionSize(SectionID id) const {
+    return isSectionDefined(id) ? section(id).size() : 0;
 }
 
 ByteArray &Compiler::section(SectionID id) {
@@ -298,11 +313,19 @@ ByteArray &Compiler::section(SectionID id) {
     return sections.at(id);
 }
 
-const ByteArray &Compiler::section(Compiler::SectionID id) const {
+const ByteArray &Compiler::section(SectionID id) const {
     return sections.at(id);
 }
 
+bool Compiler::isSymbolDefined(const std::string &name) const {
+    return std::find(std::begin(definedSymbols), std::end(definedSymbols), name) != std::end(definedSymbols);
+}
+
 void Compiler::pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset) {
+    if (isSymbolDefined(name))
+        throw std::runtime_error("symbol '" + name + "' is already defined");
+
+    definedSymbols << name;
     symbols << Symbol{name, baseSymbol, offset};
 }
 

@@ -12,8 +12,8 @@ int main() {
     c.function("f");
 
     c.push(x86::EBP);
-    c.mov(x86::ESP, x86::EBP);
-    c.push(0);
+    c.mov(x86::EBP, x86::ESP);
+    c.push(c.abs("string"));
     c.nop(); // c.call(0);
     c.leave();
     c.ret();
