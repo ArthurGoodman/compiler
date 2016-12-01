@@ -484,7 +484,7 @@ public:
 
 private:
     void regRMInstruction(byte op, const MemRef &op1, const MemRef &op2);
-    void modRegRM(byte mod, byte reg, byte rm);
+    void composeByte(byte a, byte b, byte c);
 
     template <class T>
     void gen(T value);

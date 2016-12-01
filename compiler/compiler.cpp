@@ -352,7 +352,7 @@ void Compiler::regRMInstruction(byte op, const MemRef &op1, const MemRef &op2) {
     gen((byte)(op + (op2.isAddress() ? 0x2 : 0x0)));
 
     if (!op1.isAddress() && !op2.isAddress()) {
-        modRegRM(Reg, op2, op1);
+        composeByte(Reg, op2, op1);
         return;
     }
 
@@ -362,29 +362,29 @@ void Compiler::regRMInstruction(byte op, const MemRef &op1, const MemRef &op2) {
     switch (rm.getDispSize()) {
     case 0:
         if (rm.getScale() != 0) {
-            modRegRM(Disp0, r, ESP);
-            modRegRM(log2(rm.getScale()), rm.getIndex(), rm.getBase());
+            composeByte(Disp0, r, ESP);
+            composeByte(log2(rm.getScale()), rm.getIndex(), rm.getBase());
         } else
-            modRegRM(Disp0, r, rm);
+            composeByte(Disp0, r, rm);
         break;
 
     case 1:
         if (rm.getScale() != 0) {
-            modRegRM(Disp8, r, ESP);
-            modRegRM(log2(rm.getScale()), rm.getIndex(), rm.getBase());
+            composeByte(Disp8, r, ESP);
+            composeByte(log2(rm.getScale()), rm.getIndex(), rm.getBase());
         } else
-            modRegRM(Disp8, r, rm);
+            composeByte(Disp8, r, rm);
         gen((byte)rm.getDisp());
         break;
 
     case 4:
         if (rm.getBase() == NOREG)
-            modRegRM(Disp0, r, EBP);
+            composeByte(Disp0, r, EBP);
         else if (rm.getScale() != 0) {
-            modRegRM(Disp32, r, ESP);
-            modRegRM(log2(rm.getScale()), rm.getIndex(), rm.getBase());
+            composeByte(Disp32, r, ESP);
+            composeByte(log2(rm.getScale()), rm.getIndex(), rm.getBase());
         } else
-            modRegRM(Disp32, r, rm);
+            composeByte(Disp32, r, rm);
         gen(rm.getDisp());
         break;
 
@@ -393,8 +393,8 @@ void Compiler::regRMInstruction(byte op, const MemRef &op1, const MemRef &op2) {
     }
 }
 
-void Compiler::modRegRM(byte mod, byte reg, byte rm) {
-    gen((byte)(mod << 6 | reg << 3 | rm));
+void Compiler::composeByte(byte a, byte b, byte c) {
+    gen((byte)(a << 6 | b << 3 | c));
 }
 
 bool Compiler::isSectionDefined(SectionID id) const {
