@@ -10,7 +10,7 @@
 namespace x86 {
 
 Compiler::SymRef Compiler::SymRef::operator+(int offset) const {
-    return SymRef{name, type, this->offset + offset};
+    return SymRef{ name, type, this->offset + offset };
 }
 
 void Compiler::rdata(const std::string &name, const byte *data, uint size) {
@@ -47,11 +47,11 @@ void Compiler::function(const std::string &name) {
 }
 
 Compiler::SymRef Compiler::abs(const std::string &name) const {
-    return SymRef{name, RefAbs, 0};
+    return SymRef{ name, RefAbs, 0 };
 }
 
 Compiler::SymRef Compiler::rel(const std::string &name) const {
-    return SymRef{name, RefRel, 0};
+    return SymRef{ name, RefRel, 0 };
 }
 
 void Compiler::push(const MemRef &ref) {
@@ -81,7 +81,7 @@ void Compiler::push(const SymRef &ref) {
 
     gen(ref.offset);
 
-    pushReloc(Reloc{ref.name, ref.type, offset});
+    pushReloc(Reloc{ ref.name, ref.type, offset });
 }
 
 void Compiler::push(Register reg) {
@@ -107,7 +107,7 @@ void Compiler::call(const SymRef &ref) {
 
     gen(ref.offset);
 
-    pushReloc(Reloc{ref.name, ref.type, offset});
+    pushReloc(Reloc{ ref.name, ref.type, offset });
 }
 
 void Compiler::call(Register reg) {
@@ -346,6 +346,114 @@ ByteArray Compiler::writeDLL(const std::string & /*name*/) const {
     return image;
 }
 
+void Compiler::test() {
+    //    push(x86::ptr(x86::EAX));
+    gen((byte)0xff);
+    gen(Disp0, 6, EAX, 0, 0, 0, 0);
+
+    //    push(x86::ptr(0x100));
+    gen((byte)0xff);
+    gen(Disp0, 6, 5, 0, 0, 0, 0x100);
+
+    //    push(x86::EBX + x86::EDX * 8);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 8, EDX, EBX, 0);
+
+    //    push(x86::EBX + x86::EDX * 4);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 4, EDX, EBX, 0);
+
+    //    push(x86::EBX + x86::EDX * 2);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 2, EDX, EBX, 0);
+
+    //    push(x86::EBX + x86::EDX * 1);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 1, EDX, EBX, 0);
+
+    //    push(x86::EBX + x86::EDX * 8 + (byte)0x10);
+    gen((byte)0xff);
+    gen(Disp8, 6, 4, 8, EDX, EBX, 0x10);
+
+    //    push(x86::EBX + x86::EDX * 4 + (byte)0x10);
+    gen((byte)0xff);
+    gen(Disp8, 6, 4, 4, EDX, EBX, 0x10);
+
+    //    push(x86::EBX + x86::EDX * 2 + (byte)0x10);
+    gen((byte)0xff);
+    gen(Disp8, 6, 4, 2, EDX, EBX, 0x10);
+
+    //    push(x86::EBX + x86::EDX * 1 + (byte)0x10);
+    gen((byte)0xff);
+    gen(Disp8, 6, 4, 1, EDX, EBX, 0x10);
+
+    //    push(x86::EBX + x86::EDX * 8 + 0x100);
+    gen((byte)0xff);
+    gen(Disp32, 6, 4, 8, EDX, EBX, 0x100);
+
+    //    push(x86::EBX + x86::EDX * 4 + 0x100);
+    gen((byte)0xff);
+    gen(Disp32, 6, 4, 4, EDX, EBX, 0x100);
+
+    //    push(x86::EBX + x86::EDX * 2 + 0x100);
+    gen((byte)0xff);
+    gen(Disp32, 6, 4, 2, EDX, EBX, 0x100);
+
+    //    push(x86::EBX + x86::EDX * 1 + 0x100);
+    gen((byte)0xff);
+    gen(Disp32, 6, 4, 1, EDX, EBX, 0x100);
+
+    //    push(x86::EDX * 1 + (byte)0x10);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 1, EDX, 5, 0x10);
+
+    //    push(x86::EDX * 1 + 0x100);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 1, EDX, 5, 0x100);
+
+    //    push(x86::EDX * 1);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 1, EDX, 5, 0x0);
+
+    //    push(x86::EDX * 1);
+    gen((byte)0xff);
+    gen(Disp0, 6, 4, 1, EDX, 5, 0x0);
+
+    //    push(x86::EAX);
+    gen((byte)0x50);
+
+    //    push((byte)0x10);
+    gen((byte)0x6a);
+    gen((byte)0x10);
+
+    //    push(0x100);
+    gen((byte)0x68);
+    gen(0x100);
+}
+
+void Compiler::gen(byte mod, byte reg, byte rm, byte scale, byte index, byte base, int disp) {
+    composeByte(mod, reg, rm);
+
+    if (scale != 0)
+        composeByte(log2(scale), index, base);
+
+    if ((mod == Disp0 && rm == 5) || (rm == 4 && base == 5))
+        mod = Disp32;
+
+    switch (mod) {
+    case Disp8:
+        gen((byte)disp);
+        break;
+
+    case Disp32:
+        gen(disp);
+        break;
+
+    default:
+        break;
+    }
+}
+
 void Compiler::regRMInstruction(byte op, const MemRef &op1, const MemRef &op2) {
     assert(!(op1.isAddress() && op2.isAddress()) && "too many memory references");
 
@@ -424,7 +532,7 @@ void Compiler::pushSymbol(const std::string &name, const std::string &baseSymbol
     if (isSymbolDefined(name))
         throw std::runtime_error("symbol '" + name + "' is already defined");
 
-    symbols[name] = Symbol{baseSymbol, offset};
+    symbols[name] = Symbol{ baseSymbol, offset };
 }
 
 void Compiler::pushReloc(const Reloc &reloc) {

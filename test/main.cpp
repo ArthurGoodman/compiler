@@ -5,20 +5,23 @@
 int main() {
     x86::Compiler c;
 
-    c.rdata("string", "Hello, World!");
+    //    c.rdata("string", "Hello, World!");
 
-    c.externalFunction("puts");
+    //    c.externalFunction("puts");
 
-    c.function("f");
+    //    c.function("f");
 
-    c.push(x86::EBP);
-    c.mov(x86::EBP, x86::ESP);
-    c.push(c.abs("string"));
-    c.call(c.rel("puts"));
-    c.leave();
-    c.ret();
+    //    c.push(x86::EBP);
+    //    c.mov(x86::EBP, x86::ESP);
+    //    c.push(c.abs("string"));
+    //    c.call(c.rel("puts"));
+    //    c.leave();
+    //    c.ret();
+
+    c.test();
 
     c.writeOBJ().write("a.o");
+    system("objdump -d a.o");
 
     return 0;
 }

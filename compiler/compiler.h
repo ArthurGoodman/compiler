@@ -482,7 +482,11 @@ public:
     ByteArray writeEXE() const;
     ByteArray writeDLL(const std::string &name) const;
 
+    void test();
+
 private:
+    void gen(byte mod, byte reg, byte rm, byte scale, byte index, byte base, int disp);
+
     void regRMInstruction(byte op, const MemRef &op1, const MemRef &op2);
     void composeByte(byte a, byte b, byte c);
 

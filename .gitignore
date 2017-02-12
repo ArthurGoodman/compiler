@@ -8,3 +8,4 @@ Makefile
 *.a
 *.exe
 *.dll
+*.stash
