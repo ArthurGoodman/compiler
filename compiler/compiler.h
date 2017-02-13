@@ -1,12 +1,22 @@
 #pragma once
 
 #include "function.h"
-#include "memref.h"
 
 #include <map>
 #include <cstring>
 
 namespace x86 {
+
+enum Register {
+    EAX,
+    ECX,
+    EDX,
+    EBX,
+    ESP,
+    EBP,
+    ESI,
+    EDI
+};
 
 class Compiler {
     struct __attribute__((packed)) DosHeader {
@@ -401,6 +411,15 @@ class Compiler {
         uint offset;
     };
 
+    struct MemRef {
+        byte mod;
+        byte rm;
+        byte scale;
+        byte index;
+        byte base;
+        int disp;
+    };
+
     std::map<SectionID, ByteArray> sections;
 
     std::vector<std::string> exports;
@@ -441,6 +460,16 @@ public:
     SymRef abs(const std::string &name) const;
     SymRef rel(const std::string &name) const;
 
+    MemRef ref(Register reg) const;
+    MemRef ref(byte disp, Register reg) const;
+    MemRef ref(int disp, Register reg) const;
+    MemRef ref(int disp) const;
+    MemRef ref(Register base, Register index, byte scale) const;
+    MemRef ref(byte disp, Register base, Register index, byte scale) const;
+    MemRef ref(int disp, Register base, Register index, byte scale) const;
+    MemRef ref(int disp, Register index, byte scale) const;
+    MemRef ref(Register index, byte scale) const;
+
     void push(const MemRef &ref);
     void push(byte value);
     void push(int value);
@@ -476,18 +505,13 @@ public:
 
     void nop();
 
-    //    Function compile();
-
     ByteArray writeOBJ() const;
     ByteArray writeEXE() const;
     ByteArray writeDLL(const std::string &name) const;
 
-    void test();
-
 private:
-    void gen(byte mod, byte reg, byte rm, byte scale, byte index, byte base, int disp);
+    void gen(byte reg, const MemRef &ref);
 
-    void regRMInstruction(byte op, const MemRef &op1, const MemRef &op2);
     void composeByte(byte a, byte b, byte c);
 
     template <class T>

@@ -9,12 +9,10 @@ SOURCES += \
     bytearray.cpp \
     common.cpp \
     compiler.cpp \
-    function.cpp \
-    memref.cpp
+    function.cpp
 
 HEADERS += \
     bytearray.h \
     common.h \
     compiler.h \
-    function.h \
-    memref.h
+    function.h

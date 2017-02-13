@@ -54,11 +54,74 @@ Compiler::SymRef Compiler::rel(const std::string &name) const {
     return SymRef{ name, RefRel, 0 };
 }
 
+Compiler::MemRef Compiler::ref(Register reg) const {
+    if (reg == EBP)
+        return MemRef{ Disp8, reg, 0, 0, 0, 0 };
+    else if (reg == ESP)
+        return MemRef{ Disp0, 4, 1, reg, reg, 0 };
+
+    return MemRef{ Disp0, reg, 0, 0, 0, 0 };
+}
+
+Compiler::MemRef Compiler::ref(byte disp, Register reg) const {
+    if (reg == ESP)
+        return MemRef{ Disp8, 4, 1, reg, reg, disp };
+
+    return MemRef{ Disp8, reg, 0, 0, 0, disp };
+}
+
+Compiler::MemRef Compiler::ref(int disp, Register reg) const {
+    if (reg == ESP)
+        return MemRef{ Disp32, 4, 1, reg, reg, disp };
+
+    return MemRef{ Disp32, reg, 0, 0, 0, disp };
+}
+
+Compiler::MemRef Compiler::ref(int disp) const {
+    return MemRef{ Disp0, 5, 0, 0, 0, disp };
+}
+
+Compiler::MemRef Compiler::ref(Register base, Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+
+    if (base == EBP)
+        return MemRef{ Disp8, 4, scale, index, base, 0 };
+
+    return MemRef{ Disp0, 4, scale, index, base, 0 };
+}
+
+Compiler::MemRef Compiler::ref(byte disp, Register base, Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+
+    return MemRef{ Disp8, 4, scale, index, base, disp };
+}
+
+Compiler::MemRef Compiler::ref(int disp, Register base, Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+
+    return MemRef{ Disp32, 4, scale, index, base, disp };
+}
+
+Compiler::MemRef Compiler::ref(int disp, Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+
+    return MemRef{ Disp0, 4, scale, index, 5, disp };
+}
+
+Compiler::MemRef Compiler::ref(Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+
+    return MemRef{ Disp0, 4, scale, index, 5, 0 };
+}
+
 void Compiler::push(const MemRef &ref) {
-    if (ref.isAddress())
-        regRMInstruction(0xff, ref, ESI);
-    else
-        gen((byte)(0x50 + ref));
+    gen((byte)0xff);
+    gen(6, ref);
 }
 
 void Compiler::push(byte value) {
@@ -85,11 +148,11 @@ void Compiler::push(const SymRef &ref) {
 }
 
 void Compiler::push(Register reg) {
-    push(MemRef(reg));
+    gen((byte)(0x50 + reg));
 }
 
 void Compiler::call(const MemRef &ref) {
-    regRMInstruction(0xff, ref, EDX);
+    //    regRMInstruction(0xff, ref, EDX);
 }
 
 void Compiler::call(int value) {
@@ -111,82 +174,82 @@ void Compiler::call(const SymRef &ref) {
 }
 
 void Compiler::call(Register reg) {
-    call(MemRef(reg));
+    //    call(MemRef(reg));
 }
 
 void Compiler::pop(const MemRef &ref) {
-    if (ref.isAddress())
-        regRMInstruction(0x8f, ref, EAX);
-    else
-        gen((byte)(0x58 + ref));
+    //    if (ref.isAddress())
+    //        regRMInstruction(0x8f, ref, EAX);
+    //    else
+    //        gen((byte)(0x58 + ref));
 }
 
 void Compiler::mov(const MemRef &dst, const MemRef &src) {
-    regRMInstruction(0x89, dst, src);
+    //    regRMInstruction(0x89, dst, src);
 }
 
 void Compiler::mov(const MemRef &ref, byte value) {
-    if (ref.isAddress())
-        regRMInstruction(0xc7, ref, EAX);
-    else
-        gen((byte)(0xb0 + ref));
+    //    if (ref.isAddress())
+    //        regRMInstruction(0xc7, ref, EAX);
+    //    else
+    //        gen((byte)(0xb0 + ref));
 
-    gen(value);
+    //    gen(value);
 }
 
 void Compiler::mov(const MemRef &ref, int value) {
-    if (ref.isAddress())
-        regRMInstruction(0xc7, ref, EAX);
-    else
-        gen((byte)(0xb8 + ref));
+    //    if (ref.isAddress())
+    //        regRMInstruction(0xc7, ref, EAX);
+    //    else
+    //        gen((byte)(0xb8 + ref));
 
-    gen(value);
+    //    gen(value);
 }
 
 void Compiler::mov(const MemRef &dst, Register src) {
-    mov(dst, MemRef(src));
+    //    mov(dst, MemRef(src));
 }
 
 void Compiler::lea(const MemRef &dst, const MemRef &src) {
-    assert(src.isAddress() && "src should be an address");
+    //    assert(src.isAddress() && "src should be an address");
 
-    regRMInstruction(0x8d - 0x2, dst, src);
+    //    regRMInstruction(0x8d - 0x2, dst, src);
 }
 
 void Compiler::add(const MemRef &op1, const MemRef &op2) {
-    regRMInstruction(0x1, op1, op2);
+    //    regRMInstruction(0x1, op1, op2);
 }
 
 void Compiler::add(const MemRef &ref, byte value) {
-    regRMInstruction(0x83, ref, EAX);
-    gen(value);
+    //    regRMInstruction(0x83, ref, EAX);
+    //    gen(value);
 }
 
 void Compiler::add(const MemRef &ref, int value) {
-    regRMInstruction(0x81, ref, EAX);
-    gen(value);
+    //    regRMInstruction(0x81, ref, EAX);
+    //    gen(value);
 }
 
 void Compiler::add(const MemRef &op1, Register op2) {
-    add(op1, MemRef(op2));
+    //    add(op1, MemRef(op2));
 }
 
 void Compiler::sub(const MemRef &op1, const MemRef &op2) {
-    regRMInstruction(0x29, op1, op2);
+    //    regRMInstruction(0x29, op1, op2);
 }
 
 void Compiler::sub(const MemRef &ref, byte value) {
-    regRMInstruction(0x83, ref, EBP);
-    gen(value);
+    //    regRMInstruction(0x83, ref, EBP);
+    //    gen(value);
 }
 
 void Compiler::sub(const MemRef &ref, int value) {
-    regRMInstruction(0x83, ref, EBP);
-    gen(value);
+    //    regRMInstruction(0x83, ref, EBP);
+    //    gen(value);
 }
 
 void Compiler::sub(const MemRef &op1, Register op2) {
-    sub(op1, MemRef(op2));
+    //    sub(op1, MemRef(op2));
 }
 
 void Compiler::leave() {
@@ -200,10 +263,6 @@ void Compiler::ret() {
 void Compiler::nop() {
     gen((byte)0x90);
 }
-
-//Function Compiler::compile() {
-//    return std::move(f);
-//}
 
 ByteArray Compiler::writeOBJ() const {
     ByteArray image;
@@ -346,159 +405,16 @@ ByteArray Compiler::writeDLL(const std::string & /*name*/) const {
     return image;
 }
 
-void Compiler::test() {
-    //    push(x86::ptr(x86::EAX));
-    gen((byte)0xff);
-    gen(Disp0, 6, EAX, 0, 0, 0, 0);
+void Compiler::gen(byte reg, const MemRef &ref) {
+    composeByte(ref.mod, reg, ref.rm);
 
-    //    push(x86::ptr(0x100));
-    gen((byte)0xff);
-    gen(Disp0, 6, 5, 0, 0, 0, 0x100);
+    if (ref.scale != 0)
+        composeByte(log2(ref.scale), ref.index, ref.base);
 
-    //    push(x86::EBX + x86::EDX * 8);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 8, EDX, EBX, 0);
-
-    //    push(x86::EBX + x86::EDX * 4);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 4, EDX, EBX, 0);
-
-    //    push(x86::EBX + x86::EDX * 2);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 2, EDX, EBX, 0);
-
-    //    push(x86::EBX + x86::EDX * 1);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 1, EDX, EBX, 0);
-
-    //    push(x86::EBX + x86::EDX * 8 + (byte)0x10);
-    gen((byte)0xff);
-    gen(Disp8, 6, 4, 8, EDX, EBX, 0x10);
-
-    //    push(x86::EBX + x86::EDX * 4 + (byte)0x10);
-    gen((byte)0xff);
-    gen(Disp8, 6, 4, 4, EDX, EBX, 0x10);
-
-    //    push(x86::EBX + x86::EDX * 2 + (byte)0x10);
-    gen((byte)0xff);
-    gen(Disp8, 6, 4, 2, EDX, EBX, 0x10);
-
-    //    push(x86::EBX + x86::EDX * 1 + (byte)0x10);
-    gen((byte)0xff);
-    gen(Disp8, 6, 4, 1, EDX, EBX, 0x10);
-
-    //    push(x86::EBX + x86::EDX * 8 + 0x100);
-    gen((byte)0xff);
-    gen(Disp32, 6, 4, 8, EDX, EBX, 0x100);
-
-    //    push(x86::EBX + x86::EDX * 4 + 0x100);
-    gen((byte)0xff);
-    gen(Disp32, 6, 4, 4, EDX, EBX, 0x100);
-
-    //    push(x86::EBX + x86::EDX * 2 + 0x100);
-    gen((byte)0xff);
-    gen(Disp32, 6, 4, 2, EDX, EBX, 0x100);
-
-    //    push(x86::EBX + x86::EDX * 1 + 0x100);
-    gen((byte)0xff);
-    gen(Disp32, 6, 4, 1, EDX, EBX, 0x100);
-
-    //    push(x86::EDX * 1 + (byte)0x10);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 1, EDX, 5, 0x10);
-
-    //    push(x86::EDX * 1 + 0x100);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 1, EDX, 5, 0x100);
-
-    //    push(x86::EDX * 1);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 1, EDX, 5, 0x0);
-
-    //    push(x86::EDX * 1);
-    gen((byte)0xff);
-    gen(Disp0, 6, 4, 1, EDX, 5, 0x0);
-
-    //    push(x86::EAX);
-    gen((byte)0x50);
-
-    //    push((byte)0x10);
-    gen((byte)0x6a);
-    gen((byte)0x10);
-
-    //    push(0x100);
-    gen((byte)0x68);
-    gen(0x100);
-}
-
-void Compiler::gen(byte mod, byte reg, byte rm, byte scale, byte index, byte base, int disp) {
-    composeByte(mod, reg, rm);
-
-    if (scale != 0)
-        composeByte(log2(scale), index, base);
-
-    if ((mod == Disp0 && rm == 5) || (rm == 4 && base == 5))
-        mod = Disp32;
-
-    switch (mod) {
-    case Disp8:
-        gen((byte)disp);
-        break;
-
-    case Disp32:
-        gen(disp);
-        break;
-
-    default:
-        break;
-    }
-}
-
-void Compiler::regRMInstruction(byte op, const MemRef &op1, const MemRef &op2) {
-    assert(!(op1.isAddress() && op2.isAddress()) && "too many memory references");
-
-    gen((byte)(op + (op2.isAddress() ? 0x2 : 0x0)));
-
-    if (!op1.isAddress() && !op2.isAddress()) {
-        composeByte(Reg, op2, op1);
-        return;
-    }
-
-    const MemRef &r = op1.isAddress() ? op2 : op1;
-    const MemRef &rm = op1.isAddress() ? op1 : op2;
-
-    switch (rm.getDispSize()) {
-    case 0:
-        if (rm.getScale() != 0) {
-            composeByte(Disp0, r, ESP);
-            composeByte(log2(rm.getScale()), rm.getIndex(), rm.getBase());
-        } else
-            composeByte(Disp0, r, rm);
-        break;
-
-    case 1:
-        if (rm.getScale() != 0) {
-            composeByte(Disp8, r, ESP);
-            composeByte(log2(rm.getScale()), rm.getIndex(), rm.getBase());
-        } else
-            composeByte(Disp8, r, rm);
-        gen((byte)rm.getDisp());
-        break;
-
-    case 4:
-        if (rm.getBase() == NOREG)
-            composeByte(Disp0, r, EBP);
-        else if (rm.getScale() != 0) {
-            composeByte(Disp32, r, ESP);
-            composeByte(log2(rm.getScale()), rm.getIndex(), rm.getBase());
-        } else
-            composeByte(Disp32, r, rm);
-        gen(rm.getDisp());
-        break;
-
-    default:
-        break;
-    }
+    if (ref.mod == Disp8)
+        gen((byte)ref.disp);
+    else if (ref.mod == Disp32 || (ref.mod == Disp0 && ref.rm == 5) || (ref.rm == 4 && ref.base == 5))
+        gen(ref.disp);
 }
 
 void Compiler::composeByte(byte a, byte b, byte c) {
