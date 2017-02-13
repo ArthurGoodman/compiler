@@ -470,35 +470,24 @@ public:
     MemRef ref(int disp, Register index, byte scale) const;
     MemRef ref(Register index, byte scale) const;
 
+    void push(Register reg);
     void push(const MemRef &ref);
     void push(byte value);
     void push(int value);
     void push(const SymRef &ref);
-    void push(Register reg);
 
-    void call(const MemRef &ref);
-    void call(int value);
-    void call(const SymRef &ref);
-    void call(Register reg);
-
+    void pop(Register reg);
     void pop(const MemRef &ref);
 
-    void mov(const MemRef &dst, const MemRef &src);
-    void mov(const MemRef &ref, byte value);
-    void mov(const MemRef &ref, int value);
-    void mov(const MemRef &dst, Register src);
+    void call(int disp);
+    void call(const MemRef &ref);
+    void call(const SymRef &ref);
 
-    void lea(const MemRef &dst, const MemRef &src);
-
-    void add(const MemRef &op1, const MemRef &op2);
-    void add(const MemRef &ref, byte value);
-    void add(const MemRef &ref, int value);
-    void add(const MemRef &op1, Register op2);
-
-    void sub(const MemRef &op1, const MemRef &op2);
-    void sub(const MemRef &ref, byte value);
-    void sub(const MemRef &ref, int value);
-    void sub(const MemRef &op1, Register op2);
+    void mov(Register src, Register dst);
+    void mov(int src, Register dst);
+    void mov(int src, const MemRef &dst);
+    void mov(Register src, const MemRef &dst);
+    void mov(const MemRef &src, Register dst);
 
     void leave();
     void ret();

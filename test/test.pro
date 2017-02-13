@@ -13,14 +13,6 @@ INCLUDEPATH += \
     ../../unit
 
 SOURCES += \
-    main.cpp \
-    movtest.cpp \
-    addtest.cpp \
-    pushpoptest.cpp \
-    compilertest.cpp
+    main.cpp
 
-HEADERS += \
-    movtest.h \
-    addtest.h \
-    pushpoptest.h \
-    compilertest.h
+HEADERS +=

@@ -119,6 +119,10 @@ Compiler::MemRef Compiler::ref(Register index, byte scale) const {
     return MemRef{ Disp0, 4, scale, index, 5, 0 };
 }
 
+void Compiler::push(Register reg) {
+    gen((byte)(0x50 + reg));
+}
+
 void Compiler::push(const MemRef &ref) {
     gen((byte)0xff);
     gen(6, ref);
@@ -147,17 +151,23 @@ void Compiler::push(const SymRef &ref) {
     pushReloc(Reloc{ ref.name, ref.type, offset });
 }
 
-void Compiler::push(Register reg) {
-    gen((byte)(0x50 + reg));
+void Compiler::pop(Register reg) {
+    gen((byte)(0x58 + reg));
+}
+
+void Compiler::pop(const MemRef &ref) {
+    gen((byte)0x8f);
+    gen(0, ref);
+}
+
+void Compiler::call(int disp) {
+    gen((byte)0xe8);
+    gen(disp);
 }
 
 void Compiler::call(const MemRef &ref) {
-    //    regRMInstruction(0xff, ref, EDX);
-}
-
-void Compiler::call(int value) {
-    gen((byte)0xe8);
-    gen(value);
+    gen((byte)0xff);
+    gen(2, ref);
 }
 
 void Compiler::call(const SymRef &ref) {
@@ -173,83 +183,30 @@ void Compiler::call(const SymRef &ref) {
     pushReloc(Reloc{ ref.name, ref.type, offset });
 }
 
-void Compiler::call(Register reg) {
-    //    call(MemRef(reg));
+void Compiler::mov(Register src, Register dst) {
+    gen((byte)0x89);
+    gen(src, MemRef{ Reg, dst, 0, 0, 0, 0 });
 }
 
-void Compiler::pop(const MemRef &ref) {
-    //    if (ref.isAddress())
-    //        regRMInstruction(0x8f, ref, EAX);
-    //    else
-    //        gen((byte)(0x58 + ref));
+void Compiler::mov(int src, Register dst) {
+    gen((byte)(0xb8 + dst));
+    gen(src);
 }
 
-void Compiler::mov(const MemRef &dst, const MemRef &src) {
-    //    regRMInstruction(0x89, dst, src);
+void Compiler::mov(int src, const MemRef &dst) {
+    gen((byte)0xc7);
+    gen(0, dst);
+    gen(src);
 }
 
-void Compiler::mov(const MemRef &ref, byte value) {
-    //    if (ref.isAddress())
-    //        regRMInstruction(0xc7, ref, EAX);
-    //    else
-    //        gen((byte)(0xb0 + ref));
-
-    //    gen(value);
+void Compiler::mov(Register src, const MemRef &dst) {
+    gen((byte)0x89);
+    gen(src, dst);
 }
 
-void Compiler::mov(const MemRef &ref, int value) {
-    //    if (ref.isAddress())
-    //        regRMInstruction(0xc7, ref, EAX);
-    //    else
-    //        gen((byte)(0xb8 + ref));
-
-    //    gen(value);
-}
-
-void Compiler::mov(const MemRef &dst, Register src) {
-    //    mov(dst, MemRef(src));
-}
-
-void Compiler::lea(const MemRef &dst, const MemRef &src) {
-    //    assert(src.isAddress() && "src should be an address");
-
-    //    regRMInstruction(0x8d - 0x2, dst, src);
-}
-
-void Compiler::add(const MemRef &op1, const MemRef &op2) {
-    //    regRMInstruction(0x1, op1, op2);
-}
-
-void Compiler::add(const MemRef &ref, byte value) {
-    //    regRMInstruction(0x83, ref, EAX);
-    //    gen(value);
-}
-
-void Compiler::add(const MemRef &ref, int value) {
-    //    regRMInstruction(0x81, ref, EAX);
-    //    gen(value);
-}
-
-void Compiler::add(const MemRef &op1, Register op2) {
-    //    add(op1, MemRef(op2));
-}
-
-void Compiler::sub(const MemRef &op1, const MemRef &op2) {
-    //    regRMInstruction(0x29, op1, op2);
-}
-
-void Compiler::sub(const MemRef &ref, byte value) {
-    //    regRMInstruction(0x83, ref, EBP);
-    //    gen(value);
-}
-
-void Compiler::sub(const MemRef &ref, int value) {
-    //    regRMInstruction(0x83, ref, EBP);
-    //    gen(value);
-}
-
-void Compiler::sub(const MemRef &op1, Register op2) {
-    //    sub(op1, MemRef(op2));
+void Compiler::mov(const MemRef &src, Register dst) {
+    gen((byte)0x8b);
+    gen(dst, src);
 }
 
 void Compiler::leave() {
