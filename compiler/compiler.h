@@ -484,10 +484,30 @@ public:
     void call(const SymRef &ref);
 
     void mov(Register src, Register dst);
-    void mov(int src, Register dst);
-    void mov(int src, const MemRef &dst);
+    void mov(int imm, Register dst);
+    void mov(const SymRef &ref, Register dst);
+    void mov(int imm, const MemRef &dst);
+    void mov(const SymRef &src, const MemRef &dst);
     void mov(Register src, const MemRef &dst);
     void mov(const MemRef &src, Register dst);
+
+    void lea(const MemRef &src, Register dst);
+
+    void add(byte imm, Register dst);
+    void add(int imm, Register dst);
+    void add(byte imm, const MemRef &dst);
+    void addb(byte imm, const MemRef &dst);
+    void add(int imm, const MemRef &dst);
+    void add(Register src, const MemRef &dst);
+    void add(const MemRef &src, Register dst);
+
+    void sub(byte imm, Register dst);
+    void sub(int imm, Register dst);
+    void sub(byte imm, const MemRef &dst);
+    void subb(byte imm, const MemRef &dst);
+    void sub(int imm, const MemRef &dst);
+    void sub(Register src, const MemRef &dst);
+    void sub(const MemRef &src, Register dst);
 
     void leave();
     void ret();

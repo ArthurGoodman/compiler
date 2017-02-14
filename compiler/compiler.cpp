@@ -188,15 +188,42 @@ void Compiler::mov(Register src, Register dst) {
     gen(src, MemRef{ Reg, dst, 0, 0, 0, 0 });
 }
 
-void Compiler::mov(int src, Register dst) {
+void Compiler::mov(int imm, Register dst) {
     gen((byte)(0xb8 + dst));
-    gen(src);
+    gen(imm);
 }
 
-void Compiler::mov(int src, const MemRef &dst) {
+void Compiler::mov(const Compiler::SymRef &ref, Register dst) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    gen((byte)(0xb8 + dst));
+
+    uint offset = sectionSize(TEXT);
+
+    gen(ref.offset);
+
+    pushReloc(Reloc{ ref.name, ref.type, offset });
+}
+
+void Compiler::mov(int imm, const MemRef &dst) {
     gen((byte)0xc7);
     gen(0, dst);
-    gen(src);
+    gen(imm);
+}
+
+void Compiler::mov(const SymRef &ref, const MemRef &dst) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    gen((byte)0xc7);
+    gen(0, dst);
+
+    uint offset = sectionSize(TEXT);
+
+    gen(ref.offset);
+
+    pushReloc(Reloc{ ref.name, ref.type, offset });
 }
 
 void Compiler::mov(Register src, const MemRef &dst) {
@@ -206,6 +233,101 @@ void Compiler::mov(Register src, const MemRef &dst) {
 
 void Compiler::mov(const MemRef &src, Register dst) {
     gen((byte)0x8b);
+    gen(dst, src);
+}
+
+void Compiler::lea(const Compiler::MemRef &src, Register dst) {
+    gen((byte)0x8d);
+    gen(dst, src);
+}
+
+void Compiler::add(byte imm, Register dst) {
+    gen((byte)0x83);
+    gen(0, MemRef{ Reg, dst, 0, 0, 0, 0 });
+    gen(imm);
+}
+
+void Compiler::add(int imm, Register dst) {
+    if (dst == EAX)
+        gen((byte)0x05);
+    else {
+        gen((byte)0x81);
+        gen(0, MemRef{ Reg, dst, 0, 0, 0, 0 });
+    }
+
+    gen(imm);
+}
+
+void Compiler::add(byte imm, const MemRef &dst) {
+    gen((byte)0x83);
+    gen(0, dst);
+    gen(imm);
+}
+
+void Compiler::addb(byte imm, const MemRef &dst) {
+    gen((byte)0x80);
+    gen(0, dst);
+    gen(imm);
+}
+
+void Compiler::add(int imm, const MemRef &dst) {
+    gen((byte)0x81);
+    gen(0, dst);
+    gen(imm);
+}
+
+void Compiler::add(Register src, const MemRef &dst) {
+    gen((byte)0x01);
+    gen(src, dst);
+}
+
+void Compiler::add(const MemRef &src, Register dst) {
+    gen((byte)0x03);
+    gen(dst, src);
+}
+
+void Compiler::sub(byte imm, Register dst) {
+    gen((byte)0x83);
+    gen(5, MemRef{ Reg, dst, 0, 0, 0, 0 });
+    gen(imm);
+}
+
+void Compiler::sub(int imm, Register dst) {
+    if (dst == EAX)
+        gen((byte)0x2d);
+    else {
+        gen((byte)0x81);
+        gen(5, MemRef{ Reg, dst, 0, 0, 0, 0 });
+    }
+
+    gen(imm);
+}
+
+void Compiler::sub(byte imm, const MemRef &dst) {
+    gen((byte)0x83);
+    gen(5, dst);
+    gen(imm);
+}
+
+void Compiler::subb(byte imm, const MemRef &dst) {
+    gen((byte)0x80);
+    gen(5, dst);
+    gen(imm);
+}
+
+void Compiler::sub(int imm, const MemRef &dst) {
+    gen((byte)0x81);
+    gen(5, dst);
+    gen(imm);
+}
+
+void Compiler::sub(Register src, const MemRef &dst) {
+    gen((byte)0x29);
+    gen(src, dst);
+}
+
+void Compiler::sub(const MemRef &src, Register dst) {
+    gen((byte)0x2b);
     gen(dst, src);
 }
 

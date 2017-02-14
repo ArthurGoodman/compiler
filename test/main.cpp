@@ -23,9 +23,5 @@ int main() {
     // system("objdump -x a.o");
     // system("objdump -d a.o");
 
-    system("g++ -c -o test.o test.cpp");
-    system("g++ -o test.exe test.o a.o");
-    system("test.exe");
-
     return 0;
 }
