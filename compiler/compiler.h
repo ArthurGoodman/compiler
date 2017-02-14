@@ -480,8 +480,9 @@ public:
     void pop(const MemRef &ref);
 
     void call(int disp);
-    void call(const MemRef &ref);
     void call(const SymRef &ref);
+    void call(Register reg);
+    void call(const MemRef &ref);
 
     void mov(Register src, Register dst);
     void mov(int imm, Register dst);
@@ -519,9 +520,20 @@ public:
     ByteArray writeDLL(const std::string &name) const;
 
 private:
-    void gen(byte reg, const MemRef &ref);
+    void instr(byte op);
+    void instr(byte op, byte imm);
+    void instr(byte op, int imm);
+    void instr(byte op, const SymRef &ref);
+    void instr(byte op, byte reg, Register rm);
+    void instr(byte op, byte reg, Register rm, byte imm);
+    void instr(byte op, byte reg, Register rm, int imm);
+    void instr(byte op, byte reg, Register rm, const SymRef &ref);
+    void instr(byte op, byte reg, const MemRef &rm);
+    void instr(byte op, byte reg, const MemRef &rm, byte imm);
+    void instr(byte op, byte reg, const MemRef &rm, int imm);
+    void instr(byte op, byte reg, const MemRef &rm, const SymRef &ref);
 
-    void composeByte(byte a, byte b, byte c);
+    static byte composeByte(byte a, byte b, byte c);
 
     template <class T>
     void gen(T value);
@@ -538,13 +550,17 @@ private:
     //    static const char *sectionIDToName(SectionID id);
 };
 
+inline byte Compiler::composeByte(byte a, byte b, byte c) {
+    return (byte)(a << 6 | b << 3 | c);
+}
+
 template <class T>
-void Compiler::gen(T value) {
+inline void Compiler::gen(T value) {
     section(TEXT).push(value);
 }
 
 template <class T>
-void Compiler::rdata(const std::string &name, T data) {
+inline void Compiler::rdata(const std::string &name, T data) {
     rdata(name, (const byte *)&data, sizeof(data));
 }
 
@@ -554,7 +570,7 @@ inline void Compiler::rdata(const std::string &name, const char *data) {
 }
 
 template <class T>
-void Compiler::data(const std::string &name, T data) {
+inline void Compiler::data(const std::string &name, T data) {
     Compiler::data(name, (const byte *)&data, sizeof(data));
 }
 

@@ -120,227 +120,153 @@ Compiler::MemRef Compiler::ref(Register index, byte scale) const {
 }
 
 void Compiler::push(Register reg) {
-    gen((byte)(0x50 + reg));
+    instr(0x50 + reg);
 }
 
 void Compiler::push(const MemRef &ref) {
-    gen((byte)0xff);
-    gen(6, ref);
+    instr(0xff, 6, ref);
 }
 
 void Compiler::push(byte value) {
-    gen((byte)0x6a);
-    gen(value);
+    instr(0x6a, value);
 }
 
 void Compiler::push(int value) {
-    gen((byte)0x68);
-    gen(value);
+    instr(0x68, value);
 }
 
 void Compiler::push(const SymRef &ref) {
-    if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
-
-    gen((byte)0x68);
-
-    uint offset = sectionSize(TEXT);
-
-    gen(ref.offset);
-
-    pushReloc(Reloc{ ref.name, ref.type, offset });
+    instr(0x68, ref);
 }
 
 void Compiler::pop(Register reg) {
-    gen((byte)(0x58 + reg));
+    instr(0x58 + reg);
 }
 
 void Compiler::pop(const MemRef &ref) {
-    gen((byte)0x8f);
-    gen(0, ref);
+    instr(0x8f, 0, ref);
 }
 
 void Compiler::call(int disp) {
-    gen((byte)0xe8);
-    gen(disp);
-}
-
-void Compiler::call(const MemRef &ref) {
-    gen((byte)0xff);
-    gen(2, ref);
+    instr(0xe8, disp);
 }
 
 void Compiler::call(const SymRef &ref) {
-    if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+    instr(0xe8, ref);
+}
 
-    gen((byte)0xe8);
+void Compiler::call(Register reg) {
+    instr(0xff, 2, reg);
+}
 
-    uint offset = sectionSize(TEXT);
-
-    gen(ref.offset);
-
-    pushReloc(Reloc{ ref.name, ref.type, offset });
+void Compiler::call(const MemRef &ref) {
+    instr(0xff, 2, ref);
 }
 
 void Compiler::mov(Register src, Register dst) {
-    gen((byte)0x89);
-    gen(src, MemRef{ Reg, dst, 0, 0, 0, 0 });
+    instr(0x89, src, dst);
 }
 
 void Compiler::mov(int imm, Register dst) {
-    gen((byte)(0xb8 + dst));
-    gen(imm);
+    instr(0xb8 + dst, imm);
 }
 
-void Compiler::mov(const Compiler::SymRef &ref, Register dst) {
-    if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
-
-    gen((byte)(0xb8 + dst));
-
-    uint offset = sectionSize(TEXT);
-
-    gen(ref.offset);
-
-    pushReloc(Reloc{ ref.name, ref.type, offset });
+void Compiler::mov(const SymRef &ref, Register dst) {
+    instr(0xb8 + dst, ref);
 }
 
 void Compiler::mov(int imm, const MemRef &dst) {
-    gen((byte)0xc7);
-    gen(0, dst);
-    gen(imm);
+    instr(0xc7, 0, dst, imm);
 }
 
 void Compiler::mov(const SymRef &ref, const MemRef &dst) {
-    if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
-
-    gen((byte)0xc7);
-    gen(0, dst);
-
-    uint offset = sectionSize(TEXT);
-
-    gen(ref.offset);
-
-    pushReloc(Reloc{ ref.name, ref.type, offset });
+    instr(0xc7, 0, dst, ref);
 }
 
 void Compiler::mov(Register src, const MemRef &dst) {
-    gen((byte)0x89);
-    gen(src, dst);
+    instr(0x89, src, dst);
 }
 
 void Compiler::mov(const MemRef &src, Register dst) {
-    gen((byte)0x8b);
-    gen(dst, src);
+    instr(0x8b, dst, src);
 }
 
-void Compiler::lea(const Compiler::MemRef &src, Register dst) {
-    gen((byte)0x8d);
-    gen(dst, src);
+void Compiler::lea(const MemRef &src, Register dst) {
+    instr(0x8d, dst, src);
 }
 
 void Compiler::add(byte imm, Register dst) {
-    gen((byte)0x83);
-    gen(0, MemRef{ Reg, dst, 0, 0, 0, 0 });
-    gen(imm);
+    instr(0x83, 0, dst, imm);
 }
 
 void Compiler::add(int imm, Register dst) {
     if (dst == EAX)
-        gen((byte)0x05);
-    else {
-        gen((byte)0x81);
-        gen(0, MemRef{ Reg, dst, 0, 0, 0, 0 });
-    }
-
-    gen(imm);
+        instr(0x05, imm);
+    else
+        instr(0x81, 0, dst, imm);
 }
 
 void Compiler::add(byte imm, const MemRef &dst) {
-    gen((byte)0x83);
-    gen(0, dst);
-    gen(imm);
+    instr(0x83, 0, dst, imm);
 }
 
 void Compiler::addb(byte imm, const MemRef &dst) {
-    gen((byte)0x80);
-    gen(0, dst);
-    gen(imm);
+    instr(0x80, 0, dst, imm);
 }
 
 void Compiler::add(int imm, const MemRef &dst) {
-    gen((byte)0x81);
-    gen(0, dst);
-    gen(imm);
+    instr(0x81, 0, dst, imm);
 }
 
 void Compiler::add(Register src, const MemRef &dst) {
-    gen((byte)0x01);
-    gen(src, dst);
+    instr(0x01, src, dst);
 }
 
 void Compiler::add(const MemRef &src, Register dst) {
-    gen((byte)0x03);
-    gen(dst, src);
+    instr(0x03, dst, src);
 }
 
 void Compiler::sub(byte imm, Register dst) {
-    gen((byte)0x83);
-    gen(5, MemRef{ Reg, dst, 0, 0, 0, 0 });
-    gen(imm);
+    instr(0x83, 5, dst, imm);
 }
 
 void Compiler::sub(int imm, Register dst) {
     if (dst == EAX)
-        gen((byte)0x2d);
-    else {
-        gen((byte)0x81);
-        gen(5, MemRef{ Reg, dst, 0, 0, 0, 0 });
-    }
-
-    gen(imm);
+        instr(0x2d, imm);
+    else
+        instr(0x81, 5, dst, imm);
 }
 
 void Compiler::sub(byte imm, const MemRef &dst) {
-    gen((byte)0x83);
-    gen(5, dst);
-    gen(imm);
+    instr(0x83, 5, dst, imm);
 }
 
 void Compiler::subb(byte imm, const MemRef &dst) {
-    gen((byte)0x80);
-    gen(5, dst);
-    gen(imm);
+    instr(0x80, 5, dst, imm);
 }
 
 void Compiler::sub(int imm, const MemRef &dst) {
-    gen((byte)0x81);
-    gen(5, dst);
-    gen(imm);
+    instr(0x81, 5, dst, imm);
 }
 
 void Compiler::sub(Register src, const MemRef &dst) {
-    gen((byte)0x29);
-    gen(src, dst);
+    instr(0x29, src, dst);
 }
 
 void Compiler::sub(const MemRef &src, Register dst) {
-    gen((byte)0x2b);
-    gen(dst, src);
+    instr(0x2b, dst, src);
 }
 
 void Compiler::leave() {
-    gen((byte)0xc9);
+    instr(0xc9);
 }
 
 void Compiler::ret() {
-    gen((byte)0xc3);
+    instr(0xc3);
 }
 
 void Compiler::nop() {
-    gen((byte)0x90);
+    instr(0x90);
 }
 
 ByteArray Compiler::writeOBJ() const {
@@ -484,20 +410,83 @@ ByteArray Compiler::writeDLL(const std::string & /*name*/) const {
     return image;
 }
 
-void Compiler::gen(byte reg, const MemRef &ref) {
-    composeByte(ref.mod, reg, ref.rm);
-
-    if (ref.scale != 0)
-        composeByte(log2(ref.scale), ref.index, ref.base);
-
-    if (ref.mod == Disp8)
-        gen((byte)ref.disp);
-    else if (ref.mod == Disp32 || (ref.mod == Disp0 && ref.rm == 5) || (ref.rm == 4 && ref.base == 5))
-        gen(ref.disp);
+void Compiler::instr(byte op) {
+    gen(op);
 }
 
-void Compiler::composeByte(byte a, byte b, byte c) {
-    gen((byte)(a << 6 | b << 3 | c));
+void Compiler::instr(byte op, byte imm) {
+    gen(op);
+    gen(imm);
+}
+
+void Compiler::instr(byte op, int imm) {
+    gen(op);
+    gen(imm);
+}
+
+void Compiler::instr(byte op, const SymRef &ref) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    instr(op, ref.offset);
+
+    pushReloc(Reloc{ ref.name, ref.type, sectionSize(TEXT) - 4 });
+}
+
+void Compiler::instr(byte op, byte reg, Register rm) {
+    instr(op, reg, MemRef{ Reg, rm, 0, 0, 0, 0 });
+}
+
+void Compiler::instr(byte op, byte reg, Register rm, byte imm) {
+    instr(op, reg, rm);
+    gen(imm);
+}
+
+void Compiler::instr(byte op, byte reg, Register rm, int imm) {
+    instr(op, reg, rm);
+    gen(imm);
+}
+
+void Compiler::instr(byte op, byte reg, Register rm, const SymRef &ref) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    instr(op, reg, rm, ref.offset);
+
+    pushReloc(Reloc{ ref.name, ref.type, sectionSize(TEXT) - 4 });
+}
+
+void Compiler::instr(byte op, byte reg, const MemRef &rm) {
+    gen(op);
+
+    gen(composeByte(rm.mod, reg, rm.rm));
+
+    if (rm.scale != 0)
+        gen(composeByte(log2(rm.scale), rm.index, rm.base));
+
+    if (rm.mod == Disp8)
+        gen((byte)rm.disp);
+    else if (rm.mod == Disp32 || (rm.mod == Disp0 && (rm.rm == 5 || (rm.rm == 4 && rm.base == 5))))
+        gen(rm.disp);
+}
+
+void Compiler::instr(byte op, byte reg, const MemRef &rm, byte imm) {
+    instr(op, reg, rm);
+    gen(imm);
+}
+
+void Compiler::instr(byte op, byte reg, const MemRef &rm, int imm) {
+    instr(op, reg, rm);
+    gen(imm);
+}
+
+void Compiler::instr(byte op, byte reg, const MemRef &rm, const SymRef &ref) {
+    if (!isSymbolDefined(ref.name))
+        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+
+    instr(op, reg, rm, ref.offset);
+
+    pushReloc(Reloc{ ref.name, ref.type, sectionSize(TEXT) - 4 });
 }
 
 bool Compiler::isSectionDefined(SectionID id) const {
