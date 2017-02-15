@@ -344,19 +344,19 @@ void Compiler::fsubl(const MemRef &ref) {
 
 void Compiler::fsub(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xe8 + dst));
+        instr(0xdc, (byte)(0xe0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xe0 + src));
+        instr(0xd8, (byte)(0xe8 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fsubp(FPURegister dst) {
-    instr(0xde, (byte)(0xe8 + dst));
+    instr(0xde, (byte)(0xe0 + dst));
 }
 
 void Compiler::fsubp() {
-    instr(0xde, (byte)0xe9);
+    instr(0xde, (byte)0xe1);
 }
 
 void Compiler::fisubl(const MemRef &ref) {
@@ -402,19 +402,19 @@ void Compiler::fdivl(const MemRef &ref) {
 
 void Compiler::fdiv(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xf8 + dst));
+        instr(0xdc, (byte)(0xf0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xf0 + src));
+        instr(0xd8, (byte)(0xf8 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fdivp(FPURegister dst) {
-    instr(0xde, (byte)(0xf8 + dst));
+    instr(0xde, (byte)(0xf0 + dst));
 }
 
 void Compiler::fdivp() {
-    instr(0xde, (byte)0xf9);
+    instr(0xde, (byte)0xf1);
 }
 
 void Compiler::fidivl(const MemRef &ref) {
