@@ -10,7 +10,9 @@ void ByteArray::setInitialCapacity(uint initialCapacity) {
 }
 
 ByteArray::ByteArray()
-    : _size(0), _capacity(0), _data(0) {
+    : _size(0)
+    , _capacity(0)
+    , _data(0) {
 }
 
 ByteArray::ByteArray(const ByteArray &array)

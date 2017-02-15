@@ -519,6 +519,8 @@ public:
     ByteArray writeEXE() const;
     ByteArray writeDLL(const std::string &name) const;
 
+    Function compileFunction();
+
 private:
     void instr(byte op);
     void instr(byte op, byte imm);

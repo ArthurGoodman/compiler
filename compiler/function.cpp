@@ -71,4 +71,12 @@ std::string Function::dump() {
 
     return result;
 }
+
+Function::Function(const ByteArray &code)
+    : code(code) {
+}
+
+Function::Function(ByteArray &&code)
+    : code(std::move(code)) {
+}
 }

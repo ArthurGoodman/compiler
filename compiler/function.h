@@ -29,12 +29,7 @@ public:
     std::string dump();
 
 private:
-    template <class T>
-    void gen(T value);
+    Function(const ByteArray &code);
+    Function(ByteArray &&code);
 };
-
-template <class T>
-void Function::gen(T value) {
-    code.push(value);
-}
 }

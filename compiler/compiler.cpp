@@ -410,6 +410,10 @@ ByteArray Compiler::writeDLL(const std::string & /*name*/) const {
     return image;
 }
 
+Function Compiler::compileFunction() {
+    return std::move(Function(std::move(section(TEXT))));
+}
+
 void Compiler::instr(byte op) {
     gen(op);
 }
