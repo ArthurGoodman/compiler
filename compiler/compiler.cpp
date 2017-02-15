@@ -171,8 +171,8 @@ void Compiler::mov(int imm, Register dst) {
     instr(0xb8 + dst, imm);
 }
 
-void Compiler::mov(const SymRef &ref, Register dst) {
-    instr(0xb8 + dst, ref);
+void Compiler::mov(const SymRef &src, Register dst) {
+    instr(0xb8 + dst, src);
 }
 
 void Compiler::mov(int imm, const MemRef &dst) {
@@ -267,6 +267,158 @@ void Compiler::ret() {
 
 void Compiler::nop() {
     instr(0x90);
+}
+
+void Compiler::flds(const MemRef &ref) {
+    instr(0xd9, 0, ref);
+}
+
+void Compiler::fldl(const MemRef &ref) {
+    instr(0xdd, 0, ref);
+}
+
+void Compiler::fld(FPURegister reg) {
+    instr(0xd9, (byte)(0xc0 + reg));
+}
+
+void Compiler::fsts(const MemRef &ref) {
+    instr(0xd9, 2, ref);
+}
+
+void Compiler::fstl(const MemRef &ref) {
+    instr(0xdd, 2, ref);
+}
+
+void Compiler::fst(FPURegister reg) {
+    instr(0xdd, (byte)(0xd0 + reg));
+}
+
+void Compiler::fstps(const MemRef &ref) {
+    instr(0xd9, 3, ref);
+}
+
+void Compiler::fstpl(const MemRef &ref) {
+    instr(0xdd, 3, ref);
+}
+
+void Compiler::fstp(FPURegister reg) {
+    instr(0xdd, (byte)(0xd8 + reg));
+}
+
+void Compiler::fadds(const MemRef &ref) {
+    instr(0xd8, 0, ref);
+}
+
+void Compiler::faddl(const MemRef &ref) {
+    instr(0xdc, 0, ref);
+}
+
+void Compiler::fadd(FPURegister src, FPURegister dst) {
+    if (src == ST0)
+        instr(0xdc, (byte)(0xc0 + dst));
+    else if (dst == ST0)
+        instr(0xd8, (byte)(0xc0 + src));
+    else
+        throw std::runtime_error("one of registers must be %st(0)");
+}
+
+void Compiler::faddp(FPURegister dst) {
+    instr(0xde, (byte)(0xc0 + dst));
+}
+
+void Compiler::faddp() {
+    instr(0xde, (byte)0xc1);
+}
+
+void Compiler::fiaddl(const MemRef &ref) {
+    instr(0xda, 0, ref);
+}
+
+void Compiler::fsubs(const MemRef &ref) {
+    instr(0xd8, 4, ref);
+}
+
+void Compiler::fsubl(const MemRef &ref) {
+    instr(0xdc, 4, ref);
+}
+
+void Compiler::fsub(FPURegister src, FPURegister dst) {
+    if (src == ST0)
+        instr(0xdc, (byte)(0xe8 + dst));
+    else if (dst == ST0)
+        instr(0xd8, (byte)(0xe0 + src));
+    else
+        throw std::runtime_error("one of registers must be %st(0)");
+}
+
+void Compiler::fsubp(FPURegister dst) {
+    instr(0xde, (byte)(0xe8 + dst));
+}
+
+void Compiler::fsubp() {
+    instr(0xde, (byte)0xe9);
+}
+
+void Compiler::fisubl(const MemRef &ref) {
+    instr(0xda, 4, ref);
+}
+
+void Compiler::fmuls(const MemRef &ref) {
+    instr(0xd8, 1, ref);
+}
+
+void Compiler::fmull(const MemRef &ref) {
+    instr(0xdc, 1, ref);
+}
+
+void Compiler::fmul(FPURegister src, FPURegister dst) {
+    if (src == ST0)
+        instr(0xdc, (byte)(0xc8 + dst));
+    else if (dst == ST0)
+        instr(0xd8, (byte)(0xc8 + src));
+    else
+        throw std::runtime_error("one of registers must be %st(0)");
+}
+
+void Compiler::fmulp(FPURegister dst) {
+    instr(0xde, (byte)(0xc8 + dst));
+}
+
+void Compiler::fmulp() {
+    instr(0xde, (byte)0xc9);
+}
+
+void Compiler::fimull(const MemRef &ref) {
+    instr(0xda, 1, ref);
+}
+
+void Compiler::fdivs(const MemRef &ref) {
+    instr(0xd8, 6, ref);
+}
+
+void Compiler::fdivl(const MemRef &ref) {
+    instr(0xdc, 6, ref);
+}
+
+void Compiler::fdiv(FPURegister src, FPURegister dst) {
+    if (src == ST0)
+        instr(0xdc, (byte)(0xf8 + dst));
+    else if (dst == ST0)
+        instr(0xd8, (byte)(0xf0 + src));
+    else
+        throw std::runtime_error("one of registers must be %st(0)");
+}
+
+void Compiler::fdivp(FPURegister dst) {
+    instr(0xde, (byte)(0xf8 + dst));
+}
+
+void Compiler::fdivp() {
+    instr(0xde, (byte)0xf9);
+}
+
+void Compiler::fidivl(const MemRef &ref) {
+    instr(0xda, 6, ref);
 }
 
 ByteArray Compiler::writeOBJ() const {

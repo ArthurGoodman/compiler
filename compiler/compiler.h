@@ -18,6 +18,17 @@ enum Register {
     EDI
 };
 
+enum FPURegister {
+    ST0,
+    ST1,
+    ST2,
+    ST3,
+    ST4,
+    ST5,
+    ST6,
+    ST7
+};
+
 class Compiler {
     struct __attribute__((packed)) DosHeader {
         uint16_t magic;
@@ -486,7 +497,7 @@ public:
 
     void mov(Register src, Register dst);
     void mov(int imm, Register dst);
-    void mov(const SymRef &ref, Register dst);
+    void mov(const SymRef &src, Register dst);
     void mov(int imm, const MemRef &dst);
     void mov(const SymRef &src, const MemRef &dst);
     void mov(Register src, const MemRef &dst);
@@ -514,6 +525,46 @@ public:
     void ret();
 
     void nop();
+
+    void flds(const MemRef &ref);
+    void fldl(const MemRef &ref);
+    void fld(FPURegister reg);
+
+    void fsts(const MemRef &ref);
+    void fstl(const MemRef &ref);
+    void fst(FPURegister reg);
+
+    void fstps(const MemRef &ref);
+    void fstpl(const MemRef &ref);
+    void fstp(FPURegister reg);
+
+    void fadds(const MemRef &ref);
+    void faddl(const MemRef &ref);
+    void fadd(FPURegister src, FPURegister dst);
+    void faddp(FPURegister dst);
+    void faddp();
+    void fiaddl(const MemRef &ref);
+
+    void fsubs(const MemRef &ref);
+    void fsubl(const MemRef &ref);
+    void fsub(FPURegister src, FPURegister dst);
+    void fsubp(FPURegister dst);
+    void fsubp();
+    void fisubl(const MemRef &ref);
+
+    void fmuls(const MemRef &ref);
+    void fmull(const MemRef &ref);
+    void fmul(FPURegister src, FPURegister dst);
+    void fmulp(FPURegister dst);
+    void fmulp();
+    void fimull(const MemRef &ref);
+
+    void fdivs(const MemRef &ref);
+    void fdivl(const MemRef &ref);
+    void fdiv(FPURegister src, FPURegister dst);
+    void fdivp(FPURegister dst);
+    void fdivp();
+    void fidivl(const MemRef &ref);
 
     ByteArray writeOBJ() const;
     ByteArray writeEXE() const;
