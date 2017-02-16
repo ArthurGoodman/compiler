@@ -125,7 +125,11 @@ Compiler::MemRef Compiler::ref(Register index, byte scale) const {
 void Compiler::relocate(const std::string &name, int value) {
     for (auto &reloc : relocs)
         if (reloc.name == name) {
-            *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value;
+            if (reloc.type == RefAbs)
+                *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value;
+            else
+                *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value - reinterpret_cast<int>(section(TEXT).data() + reloc.offset) - 4;
+
             return;
         }
 
