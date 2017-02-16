@@ -123,17 +123,20 @@ Compiler::MemRef Compiler::ref(Register index, byte scale) const {
 }
 
 void Compiler::relocate(const std::string &name, int value) {
+    bool found = false;
+
     for (auto &reloc : relocs)
         if (reloc.name == name) {
+            found = true;
+
             if (reloc.type == RefAbs)
                 *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value;
             else
                 *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value - reinterpret_cast<int>(section(TEXT).data() + reloc.offset) - 4;
-
-            return;
         }
 
-    throw std::runtime_error("undefined symbol '" + name + "'");
+    if (!found)
+        throw std::runtime_error("undefined symbol '" + name + "'");
 }
 
 void Compiler::push(Register reg) {
