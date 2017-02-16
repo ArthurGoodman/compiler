@@ -27,19 +27,23 @@ int main() {
     // system("objdump -x a.o");
     // system("objdump -d a.o");
 
-    const char *str = "Hello, World!";
+    c.symbol("str");
+    c.symbol("puts");
 
     c.push(x86::EBP);
     c.push(x86::EBX);
     c.mov(x86::ESP, x86::EBP);
-    c.push(reinterpret_cast<int>(str));
-    c.mov(reinterpret_cast<int>(puts), x86::EBX);
+    c.push(c.abs("str"));
+    c.mov(c.abs("puts"), x86::EBX);
     c.call(x86::EBX);
     c.mov(0, x86::EAX);
     c.mov(x86::EBP, x86::ESP);
     c.pop(x86::EBX);
     c.pop(x86::EBP);
     c.ret();
+
+    c.relocate("str", reinterpret_cast<uint>("Hello, World!"));
+    c.relocate("puts", reinterpret_cast<uint>(puts));
 
     x86::Function f = c.compileFunction();
     std::cout << f.dump() << "\n";

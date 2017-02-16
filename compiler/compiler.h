@@ -468,6 +468,8 @@ public:
 
     void function(const std::string &name);
 
+    void symbol(const std::string &name);
+
     SymRef abs(const std::string &name) const;
     SymRef rel(const std::string &name) const;
 
@@ -480,6 +482,8 @@ public:
     MemRef ref(int disp, Register base, Register index, byte scale) const;
     MemRef ref(int disp, Register index, byte scale) const;
     MemRef ref(Register index, byte scale) const;
+
+    void relocate(const std::string &name, int value);
 
     void push(Register reg);
     void push(const MemRef &ref);
@@ -507,17 +511,21 @@ public:
 
     void add(byte imm, Register dst);
     void add(int imm, Register dst);
+    void add(const SymRef &ref, Register dst);
     void add(byte imm, const MemRef &dst);
     void addb(byte imm, const MemRef &dst);
     void add(int imm, const MemRef &dst);
+    void add(const SymRef &ref, const MemRef &dst);
     void add(Register src, const MemRef &dst);
     void add(const MemRef &src, Register dst);
 
     void sub(byte imm, Register dst);
     void sub(int imm, Register dst);
+    void sub(const SymRef &ref, Register dst);
     void sub(byte imm, const MemRef &dst);
     void subb(byte imm, const MemRef &dst);
     void sub(int imm, const MemRef &dst);
+    void sub(const SymRef &ref, const MemRef &dst);
     void sub(Register src, const MemRef &dst);
     void sub(const MemRef &src, Register dst);
 
@@ -613,8 +621,6 @@ private:
     bool isSymbolDefined(const std::string &name) const;
     void pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset);
     void pushReloc(const Reloc &reloc);
-
-    //    static const char *sectionIDToName(SectionID id);
 };
 
 inline byte Compiler::composeByte(byte a, byte b, byte c) {

@@ -46,39 +46,43 @@ void Compiler::function(const std::string &name) {
     funcs << name;
 }
 
+void Compiler::symbol(const std::string &name) {
+    pushSymbol(name, "", 0);
+}
+
 Compiler::SymRef Compiler::abs(const std::string &name) const {
-    return SymRef{ name, RefAbs, 0 };
+    return { name, RefAbs, 0 };
 }
 
 Compiler::SymRef Compiler::rel(const std::string &name) const {
-    return SymRef{ name, RefRel, 0 };
+    return { name, RefRel, 0 };
 }
 
 Compiler::MemRef Compiler::ref(Register reg) const {
     if (reg == EBP)
-        return MemRef{ Disp8, reg, 0, 0, 0, 0 };
+        return { Disp8, reg, 0, 0, 0, 0 };
     else if (reg == ESP)
-        return MemRef{ Disp0, 4, 1, reg, reg, 0 };
+        return { Disp0, 4, 1, reg, reg, 0 };
 
-    return MemRef{ Disp0, reg, 0, 0, 0, 0 };
+    return { Disp0, reg, 0, 0, 0, 0 };
 }
 
 Compiler::MemRef Compiler::ref(byte disp, Register reg) const {
     if (reg == ESP)
-        return MemRef{ Disp8, 4, 1, reg, reg, disp };
+        return { Disp8, 4, 1, reg, reg, disp };
 
-    return MemRef{ Disp8, reg, 0, 0, 0, disp };
+    return { Disp8, reg, 0, 0, 0, disp };
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register reg) const {
     if (reg == ESP)
-        return MemRef{ Disp32, 4, 1, reg, reg, disp };
+        return { Disp32, 4, 1, reg, reg, disp };
 
-    return MemRef{ Disp32, reg, 0, 0, 0, disp };
+    return { Disp32, reg, 0, 0, 0, disp };
 }
 
 Compiler::MemRef Compiler::ref(int disp) const {
-    return MemRef{ Disp0, 5, 0, 0, 0, disp };
+    return { Disp0, 5, 0, 0, 0, disp };
 }
 
 Compiler::MemRef Compiler::ref(Register base, Register index, byte scale) const {
@@ -86,37 +90,47 @@ Compiler::MemRef Compiler::ref(Register base, Register index, byte scale) const 
         throw std::runtime_error("%esp cannot be an index");
 
     if (base == EBP)
-        return MemRef{ Disp8, 4, scale, index, base, 0 };
+        return { Disp8, 4, scale, index, base, 0 };
 
-    return MemRef{ Disp0, 4, scale, index, base, 0 };
+    return { Disp0, 4, scale, index, base, 0 };
 }
 
 Compiler::MemRef Compiler::ref(byte disp, Register base, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
 
-    return MemRef{ Disp8, 4, scale, index, base, disp };
+    return { Disp8, 4, scale, index, base, disp };
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register base, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
 
-    return MemRef{ Disp32, 4, scale, index, base, disp };
+    return { Disp32, 4, scale, index, base, disp };
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
 
-    return MemRef{ Disp0, 4, scale, index, 5, disp };
+    return { Disp0, 4, scale, index, 5, disp };
 }
 
 Compiler::MemRef Compiler::ref(Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
 
-    return MemRef{ Disp0, 4, scale, index, 5, 0 };
+    return { Disp0, 4, scale, index, 5, 0 };
+}
+
+void Compiler::relocate(const std::string &name, int value) {
+    for (auto &reloc : relocs)
+        if (reloc.name == name) {
+            *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value;
+            return;
+        }
+
+    throw std::runtime_error("undefined symbol '" + name + "'");
 }
 
 void Compiler::push(Register reg) {
@@ -206,6 +220,13 @@ void Compiler::add(int imm, Register dst) {
         instr(0x81, 0, dst, imm);
 }
 
+void Compiler::add(const SymRef &ref, Register dst) {
+    if (dst == EAX)
+        instr(0x05, ref);
+    else
+        instr(0x81, 0, dst, ref);
+}
+
 void Compiler::add(byte imm, const MemRef &dst) {
     instr(0x83, 0, dst, imm);
 }
@@ -216,6 +237,10 @@ void Compiler::addb(byte imm, const MemRef &dst) {
 
 void Compiler::add(int imm, const MemRef &dst) {
     instr(0x81, 0, dst, imm);
+}
+
+void Compiler::add(const SymRef &ref, const MemRef &dst) {
+    instr(0x81, 0, dst, ref);
 }
 
 void Compiler::add(Register src, const MemRef &dst) {
@@ -237,6 +262,13 @@ void Compiler::sub(int imm, Register dst) {
         instr(0x81, 5, dst, imm);
 }
 
+void Compiler::sub(const SymRef &ref, Register dst) {
+    if (dst == EAX)
+        instr(0x2d, ref);
+    else
+        instr(0x81, 5, dst, ref);
+}
+
 void Compiler::sub(byte imm, const MemRef &dst) {
     instr(0x83, 5, dst, imm);
 }
@@ -247,6 +279,10 @@ void Compiler::subb(byte imm, const MemRef &dst) {
 
 void Compiler::sub(int imm, const MemRef &dst) {
     instr(0x81, 5, dst, imm);
+}
+
+void Compiler::sub(const SymRef &ref, const MemRef &dst) {
+    instr(0x81, 5, dst, ref);
 }
 
 void Compiler::sub(Register src, const MemRef &dst) {
@@ -278,7 +314,7 @@ void Compiler::fldl(const MemRef &ref) {
 }
 
 void Compiler::fld(FPURegister reg) {
-    instr(0xd9, (byte)(0xc0 + reg));
+    instr(0xd9, static_cast<byte>(0xc0 + reg));
 }
 
 void Compiler::fsts(const MemRef &ref) {
@@ -290,7 +326,7 @@ void Compiler::fstl(const MemRef &ref) {
 }
 
 void Compiler::fst(FPURegister reg) {
-    instr(0xdd, (byte)(0xd0 + reg));
+    instr(0xdd, static_cast<byte>(0xd0 + reg));
 }
 
 void Compiler::fstps(const MemRef &ref) {
@@ -302,7 +338,7 @@ void Compiler::fstpl(const MemRef &ref) {
 }
 
 void Compiler::fstp(FPURegister reg) {
-    instr(0xdd, (byte)(0xd8 + reg));
+    instr(0xdd, static_cast<byte>(0xd8 + reg));
 }
 
 void Compiler::fadds(const MemRef &ref) {
@@ -315,19 +351,19 @@ void Compiler::faddl(const MemRef &ref) {
 
 void Compiler::fadd(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xc0 + dst));
+        instr(0xdc, static_cast<byte>(0xc0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xc0 + src));
+        instr(0xd8, static_cast<byte>(0xc0 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::faddp(FPURegister dst) {
-    instr(0xde, (byte)(0xc0 + dst));
+    instr(0xde, static_cast<byte>(0xc0 + dst));
 }
 
 void Compiler::faddp() {
-    instr(0xde, (byte)0xc1);
+    instr(0xde, static_cast<byte>(0xc1));
 }
 
 void Compiler::fiaddl(const MemRef &ref) {
@@ -344,19 +380,19 @@ void Compiler::fsubl(const MemRef &ref) {
 
 void Compiler::fsub(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xe0 + dst));
+        instr(0xdc, static_cast<byte>(0xe0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xe0 + src));
+        instr(0xd8, static_cast<byte>(0xe0 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fsubp(FPURegister dst) {
-    instr(0xde, (byte)(0xe0 + dst));
+    instr(0xde, static_cast<byte>(0xe0 + dst));
 }
 
 void Compiler::fsubp() {
-    instr(0xde, (byte)0xe1);
+    instr(0xde, static_cast<byte>(0xe1));
 }
 
 void Compiler::fisubl(const MemRef &ref) {
@@ -373,19 +409,19 @@ void Compiler::fsubrl(const MemRef &ref) {
 
 void Compiler::fsubr(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xe8 + dst));
+        instr(0xdc, static_cast<byte>(0xe8 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xe8 + src));
+        instr(0xd8, static_cast<byte>(0xe8 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fsubrp(FPURegister dst) {
-    instr(0xde, (byte)(0xe8 + dst));
+    instr(0xde, static_cast<byte>(0xe8 + dst));
 }
 
 void Compiler::fsubrp() {
-    instr(0xde, (byte)0xe9);
+    instr(0xde, static_cast<byte>(0xe9));
 }
 
 void Compiler::fisubrl(const MemRef &ref) {
@@ -402,19 +438,19 @@ void Compiler::fmull(const MemRef &ref) {
 
 void Compiler::fmul(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xc8 + dst));
+        instr(0xdc, static_cast<byte>(0xc8 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xc8 + src));
+        instr(0xd8, static_cast<byte>(0xc8 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fmulp(FPURegister dst) {
-    instr(0xde, (byte)(0xc8 + dst));
+    instr(0xde, static_cast<byte>(0xc8 + dst));
 }
 
 void Compiler::fmulp() {
-    instr(0xde, (byte)0xc9);
+    instr(0xde, static_cast<byte>(0xc9));
 }
 
 void Compiler::fimull(const MemRef &ref) {
@@ -431,19 +467,19 @@ void Compiler::fdivl(const MemRef &ref) {
 
 void Compiler::fdiv(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xf0 + dst));
+        instr(0xdc, static_cast<byte>(0xf0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xf0 + src));
+        instr(0xd8, static_cast<byte>(0xf0 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fdivp(FPURegister dst) {
-    instr(0xde, (byte)(0xf0 + dst));
+    instr(0xde, static_cast<byte>(0xf0 + dst));
 }
 
 void Compiler::fdivp() {
-    instr(0xde, (byte)0xf1);
+    instr(0xde, static_cast<byte>(0xf1));
 }
 
 void Compiler::fidivl(const MemRef &ref) {
@@ -460,19 +496,19 @@ void Compiler::fdivrl(const MemRef &ref) {
 
 void Compiler::fdivr(FPURegister src, FPURegister dst) {
     if (src == ST0)
-        instr(0xdc, (byte)(0xf8 + dst));
+        instr(0xdc, static_cast<byte>(0xf8 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xf8 + src));
+        instr(0xd8, static_cast<byte>(0xf8 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
 
 void Compiler::fdivrp(FPURegister dst) {
-    instr(0xde, (byte)(0xf8 + dst));
+    instr(0xde, static_cast<byte>(0xf8 + dst));
 }
 
 void Compiler::fdivrp() {
-    instr(0xde, (byte)0xf9);
+    instr(0xde, static_cast<byte>(0xf9));
 }
 
 void Compiler::fidivrl(const MemRef &ref) {
@@ -594,13 +630,13 @@ ByteArray Compiler::writeOBJ() const {
 
     image.push(fileHeader);
 
-    image.push((byte *)sectionHeaders.data(), sectionHeaders.size() * sizeof(SectionHeader));
+    image.push(reinterpret_cast<byte *>(sectionHeaders.data()), sectionHeaders.size() * sizeof(SectionHeader));
 
     for (auto &section : sections)
         image.push(section.second);
 
-    image.push((byte *)textRelocs.data(), textRelocs.size() * sizeof(RelocationDirective));
-    image.push((byte *)symbolTable.data(), symbolTable.size() * sizeof(SymbolTableEntry));
+    image.push(reinterpret_cast<byte *>(textRelocs.data()), textRelocs.size() * sizeof(RelocationDirective));
+    image.push(reinterpret_cast<byte *>(symbolTable.data()), symbolTable.size() * sizeof(SymbolTableEntry));
 
     if (stringTableSize > 0) {
         image.push(stringTableSize);
@@ -648,7 +684,7 @@ void Compiler::instr(byte op, const SymRef &ref) {
 }
 
 void Compiler::instr(byte op, byte reg, Register rm) {
-    instr(op, reg, MemRef{ Reg, rm, 0, 0, 0, 0 });
+    instr(op, reg, { Reg, rm, 0, 0, 0, 0 });
 }
 
 void Compiler::instr(byte op, byte reg, Register rm, byte imm) {
@@ -667,7 +703,7 @@ void Compiler::instr(byte op, byte reg, Register rm, const SymRef &ref) {
 
     instr(op, reg, rm, ref.offset);
 
-    pushReloc(Reloc{ ref.name, ref.type, sectionSize(TEXT) - 4 });
+    pushReloc({ ref.name, ref.type, sectionSize(TEXT) - 4 });
 }
 
 void Compiler::instr(byte op, byte reg, const MemRef &rm) {
@@ -736,32 +772,4 @@ void Compiler::pushSymbol(const std::string &name, const std::string &baseSymbol
 void Compiler::pushReloc(const Reloc &reloc) {
     relocs << reloc;
 }
-
-//const char *Compiler::sectionIDToName(SectionID id) {
-//    switch (id) {
-//    case TEXT:
-//        return ".text";
-
-//    case EDATA:
-//        return ".edata";
-
-//    case IDATA:
-//        return ".idata";
-
-//    case RDATA:
-//        return ".rdata";
-
-//    case DATA:
-//        return ".data";
-
-//    case BSS:
-//        return ".bss";
-
-//    case RELOC:
-//        return ".reloc";
-
-//    default:
-//        return 0;
-//    }
-//}
 }
