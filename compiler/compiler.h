@@ -552,6 +552,13 @@ public:
     void fsubp();
     void fisubl(const MemRef &ref);
 
+    void fsubrs(const MemRef &ref);
+    void fsubrl(const MemRef &ref);
+    void fsubr(FPURegister src, FPURegister dst);
+    void fsubrp(FPURegister dst);
+    void fsubrp();
+    void fisubrl(const MemRef &ref);
+
     void fmuls(const MemRef &ref);
     void fmull(const MemRef &ref);
     void fmul(FPURegister src, FPURegister dst);
@@ -565,6 +572,13 @@ public:
     void fdivp(FPURegister dst);
     void fdivp();
     void fidivl(const MemRef &ref);
+
+    void fdivrs(const MemRef &ref);
+    void fdivrl(const MemRef &ref);
+    void fdivr(FPURegister src, FPURegister dst);
+    void fdivrp(FPURegister dst);
+    void fdivrp();
+    void fidivrl(const MemRef &ref);
 
     ByteArray writeOBJ() const;
     ByteArray writeEXE() const;

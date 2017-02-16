@@ -346,7 +346,7 @@ void Compiler::fsub(FPURegister src, FPURegister dst) {
     if (src == ST0)
         instr(0xdc, (byte)(0xe0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xe8 + src));
+        instr(0xd8, (byte)(0xe0 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
@@ -361,6 +361,35 @@ void Compiler::fsubp() {
 
 void Compiler::fisubl(const MemRef &ref) {
     instr(0xda, 4, ref);
+}
+
+void Compiler::fsubrs(const MemRef &ref) {
+    instr(0xd8, 5, ref);
+}
+
+void Compiler::fsubrl(const MemRef &ref) {
+    instr(0xdc, 5, ref);
+}
+
+void Compiler::fsubr(FPURegister src, FPURegister dst) {
+    if (src == ST0)
+        instr(0xdc, (byte)(0xe8 + dst));
+    else if (dst == ST0)
+        instr(0xd8, (byte)(0xe8 + src));
+    else
+        throw std::runtime_error("one of registers must be %st(0)");
+}
+
+void Compiler::fsubrp(FPURegister dst) {
+    instr(0xde, (byte)(0xe8 + dst));
+}
+
+void Compiler::fsubrp() {
+    instr(0xde, (byte)0xe9);
+}
+
+void Compiler::fisubrl(const MemRef &ref) {
+    instr(0xda, 5, ref);
 }
 
 void Compiler::fmuls(const MemRef &ref) {
@@ -404,7 +433,7 @@ void Compiler::fdiv(FPURegister src, FPURegister dst) {
     if (src == ST0)
         instr(0xdc, (byte)(0xf0 + dst));
     else if (dst == ST0)
-        instr(0xd8, (byte)(0xf8 + src));
+        instr(0xd8, (byte)(0xf0 + src));
     else
         throw std::runtime_error("one of registers must be %st(0)");
 }
@@ -419,6 +448,35 @@ void Compiler::fdivp() {
 
 void Compiler::fidivl(const MemRef &ref) {
     instr(0xda, 6, ref);
+}
+
+void Compiler::fdivrs(const MemRef &ref) {
+    instr(0xd8, 7, ref);
+}
+
+void Compiler::fdivrl(const MemRef &ref) {
+    instr(0xdc, 7, ref);
+}
+
+void Compiler::fdivr(FPURegister src, FPURegister dst) {
+    if (src == ST0)
+        instr(0xdc, (byte)(0xf8 + dst));
+    else if (dst == ST0)
+        instr(0xd8, (byte)(0xf8 + src));
+    else
+        throw std::runtime_error("one of registers must be %st(0)");
+}
+
+void Compiler::fdivrp(FPURegister dst) {
+    instr(0xde, (byte)(0xf8 + dst));
+}
+
+void Compiler::fdivrp() {
+    instr(0xde, (byte)0xf9);
+}
+
+void Compiler::fidivrl(const MemRef &ref) {
+    instr(0xda, 7, ref);
 }
 
 ByteArray Compiler::writeOBJ() const {
