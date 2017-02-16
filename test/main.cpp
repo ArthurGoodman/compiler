@@ -34,16 +34,15 @@ int main() {
     c.push(x86::EBX);
     c.mov(x86::ESP, x86::EBP);
     c.push(c.abs("str"));
-    c.mov(c.abs("puts"), x86::EBX);
-    c.call(x86::EBX);
+    c.call(c.rel("puts"));
     c.mov(0, x86::EAX);
     c.mov(x86::EBP, x86::ESP);
     c.pop(x86::EBX);
     c.pop(x86::EBP);
     c.ret();
 
-    c.relocate("str", reinterpret_cast<uint>("Hello, World!"));
-    c.relocate("puts", reinterpret_cast<uint>(puts));
+    c.relocate("str", reinterpret_cast<int>("Hello, World!"));
+    c.relocate("puts", reinterpret_cast<int>(puts));
 
     x86::Function f = c.compileFunction();
     std::cout << f.dump() << "\n";
