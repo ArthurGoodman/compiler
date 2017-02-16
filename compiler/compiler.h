@@ -474,11 +474,9 @@ public:
     SymRef rel(const std::string &name) const;
 
     MemRef ref(Register reg) const;
-    MemRef ref(byte disp, Register reg) const;
     MemRef ref(int disp, Register reg) const;
     MemRef ref(int disp) const;
     MemRef ref(Register base, Register index, byte scale) const;
-    MemRef ref(byte disp, Register base, Register index, byte scale) const;
     MemRef ref(int disp, Register base, Register index, byte scale) const;
     MemRef ref(int disp, Register index, byte scale) const;
     MemRef ref(Register index, byte scale) const;
@@ -487,7 +485,6 @@ public:
 
     void push(Register reg);
     void push(const MemRef &ref);
-    void push(byte value);
     void push(int value);
     void push(const SymRef &ref);
 
@@ -509,20 +506,16 @@ public:
 
     void lea(const MemRef &src, Register dst);
 
-    void add(byte imm, Register dst);
     void add(int imm, Register dst);
     void add(const SymRef &ref, Register dst);
-    void add(byte imm, const MemRef &dst);
     void addb(byte imm, const MemRef &dst);
     void add(int imm, const MemRef &dst);
     void add(const SymRef &ref, const MemRef &dst);
     void add(Register src, const MemRef &dst);
     void add(const MemRef &src, Register dst);
 
-    void sub(byte imm, Register dst);
     void sub(int imm, Register dst);
     void sub(const SymRef &ref, Register dst);
-    void sub(byte imm, const MemRef &dst);
     void subb(byte imm, const MemRef &dst);
     void sub(int imm, const MemRef &dst);
     void sub(const SymRef &ref, const MemRef &dst);
@@ -621,6 +614,8 @@ private:
     bool isSymbolDefined(const std::string &name) const;
     void pushSymbol(const std::string &name, const std::string &baseSymbol, uint offset);
     void pushReloc(const Reloc &reloc);
+
+    static bool isByte(int value);
 };
 
 inline byte Compiler::composeByte(byte a, byte b, byte c) {
@@ -650,5 +645,9 @@ inline void Compiler::data(const std::string &name, T data) {
 template <>
 inline void Compiler::data(const std::string &name, const char *data) {
     Compiler::data(name, (const byte *)data, strlen(data));
+}
+
+inline bool Compiler::isByte(int value) {
+    return value >= -128 && value <= 127;
 }
 }

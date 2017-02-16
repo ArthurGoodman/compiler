@@ -63,22 +63,22 @@ Compiler::MemRef Compiler::ref(Register reg) const {
         return { Disp8, reg, 0, 0, 0, 0 };
     else if (reg == ESP)
         return { Disp0, 4, 1, reg, reg, 0 };
-
-    return { Disp0, reg, 0, 0, 0, 0 };
-}
-
-Compiler::MemRef Compiler::ref(byte disp, Register reg) const {
-    if (reg == ESP)
-        return { Disp8, 4, 1, reg, reg, disp };
-
-    return { Disp8, reg, 0, 0, 0, disp };
+    else
+        return { Disp0, reg, 0, 0, 0, 0 };
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register reg) const {
-    if (reg == ESP)
-        return { Disp32, 4, 1, reg, reg, disp };
-
-    return { Disp32, reg, 0, 0, 0, disp };
+    if (isByte(disp)) {
+        if (reg == ESP)
+            return { Disp8, 4, 1, reg, reg, disp };
+        else
+            return { Disp8, reg, 0, 0, 0, disp };
+    } else {
+        if (reg == ESP)
+            return { Disp32, 4, 1, reg, reg, disp };
+        else
+            return { Disp32, reg, 0, 0, 0, disp };
+    }
 }
 
 Compiler::MemRef Compiler::ref(int disp) const {
@@ -88,39 +88,38 @@ Compiler::MemRef Compiler::ref(int disp) const {
 Compiler::MemRef Compiler::ref(Register base, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
-
-    if (base == EBP)
+    else if (base == EBP)
         return { Disp8, 4, scale, index, base, 0 };
-
-    return { Disp0, 4, scale, index, base, 0 };
-}
-
-Compiler::MemRef Compiler::ref(byte disp, Register base, Register index, byte scale) const {
-    if (index == ESP)
-        throw std::runtime_error("%esp cannot be an index");
-
-    return { Disp8, 4, scale, index, base, disp };
+    else
+        return { Disp0, 4, scale, index, base, 0 };
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register base, Register index, byte scale) const {
-    if (index == ESP)
-        throw std::runtime_error("%esp cannot be an index");
-
-    return { Disp32, 4, scale, index, base, disp };
+    if (isByte(disp)) {
+        if (index == ESP)
+            throw std::runtime_error("%esp cannot be an index");
+        else
+            return { Disp8, 4, scale, index, base, disp };
+    } else {
+        if (index == ESP)
+            throw std::runtime_error("%esp cannot be an index");
+        else
+            return { Disp32, 4, scale, index, base, disp };
+    }
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
-
-    return { Disp0, 4, scale, index, 5, disp };
+    else
+        return { Disp0, 4, scale, index, 5, disp };
 }
 
 Compiler::MemRef Compiler::ref(Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
-
-    return { Disp0, 4, scale, index, 5, 0 };
+    else
+        return { Disp0, 4, scale, index, 5, 0 };
 }
 
 void Compiler::relocate(const std::string &name, int value) {
@@ -141,12 +140,11 @@ void Compiler::push(const MemRef &ref) {
     instr(0xff, 6, ref);
 }
 
-void Compiler::push(byte value) {
-    instr(0x6a, value);
-}
-
 void Compiler::push(int value) {
-    instr(0x68, value);
+    if (isByte(value))
+        instr(0x6a, static_cast<byte>(value));
+    else
+        instr(0x68, value);
 }
 
 void Compiler::push(const SymRef &ref) {
@@ -209,12 +207,10 @@ void Compiler::lea(const MemRef &src, Register dst) {
     instr(0x8d, dst, src);
 }
 
-void Compiler::add(byte imm, Register dst) {
-    instr(0x83, 0, dst, imm);
-}
-
 void Compiler::add(int imm, Register dst) {
-    if (dst == EAX)
+    if (isByte(imm))
+        instr(0x83, 0, dst, static_cast<byte>(imm));
+    else if (dst == EAX)
         instr(0x05, imm);
     else
         instr(0x81, 0, dst, imm);
@@ -227,16 +223,15 @@ void Compiler::add(const SymRef &ref, Register dst) {
         instr(0x81, 0, dst, ref);
 }
 
-void Compiler::add(byte imm, const MemRef &dst) {
-    instr(0x83, 0, dst, imm);
-}
-
 void Compiler::addb(byte imm, const MemRef &dst) {
     instr(0x80, 0, dst, imm);
 }
 
 void Compiler::add(int imm, const MemRef &dst) {
-    instr(0x81, 0, dst, imm);
+    if (isByte(imm))
+        instr(0x83, 0, dst, static_cast<byte>(imm));
+    else
+        instr(0x81, 0, dst, imm);
 }
 
 void Compiler::add(const SymRef &ref, const MemRef &dst) {
@@ -251,12 +246,10 @@ void Compiler::add(const MemRef &src, Register dst) {
     instr(0x03, dst, src);
 }
 
-void Compiler::sub(byte imm, Register dst) {
-    instr(0x83, 5, dst, imm);
-}
-
 void Compiler::sub(int imm, Register dst) {
-    if (dst == EAX)
+    if (isByte(imm))
+        instr(0x83, 5, dst, static_cast<byte>(imm));
+    else if (dst == EAX)
         instr(0x2d, imm);
     else
         instr(0x81, 5, dst, imm);
@@ -269,16 +262,15 @@ void Compiler::sub(const SymRef &ref, Register dst) {
         instr(0x81, 5, dst, ref);
 }
 
-void Compiler::sub(byte imm, const MemRef &dst) {
-    instr(0x83, 5, dst, imm);
-}
-
 void Compiler::subb(byte imm, const MemRef &dst) {
     instr(0x80, 5, dst, imm);
 }
 
 void Compiler::sub(int imm, const MemRef &dst) {
-    instr(0x81, 5, dst, imm);
+    if (isByte(imm))
+        instr(0x83, 5, dst, static_cast<byte>(imm));
+    else
+        instr(0x81, 5, dst, imm);
 }
 
 void Compiler::sub(const SymRef &ref, const MemRef &dst) {
@@ -715,7 +707,7 @@ void Compiler::instr(byte op, byte reg, const MemRef &rm) {
         gen(composeByte(log2(rm.scale), rm.index, rm.base));
 
     if (rm.mod == Disp8)
-        gen((byte)rm.disp);
+        gen(static_cast<byte>(rm.disp));
     else if (rm.mod == Disp32 || (rm.mod == Disp0 && (rm.rm == 5 || (rm.rm == 4 && rm.base == 5))))
         gen(rm.disp);
 }
