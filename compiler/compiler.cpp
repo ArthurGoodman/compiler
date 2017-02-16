@@ -130,9 +130,9 @@ void Compiler::relocate(const std::string &name, int value) {
             found = true;
 
             if (reloc.type == RefAbs)
-                *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value;
+                *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) += value;
             else
-                *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) = value - reinterpret_cast<int>(section(TEXT).data() + reloc.offset) - 4;
+                *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) += value - reinterpret_cast<int>(section(TEXT).data() + reloc.offset + 4);
         }
 
     if (!found)
