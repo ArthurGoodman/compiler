@@ -413,6 +413,11 @@ class Compiler {
         SymRefType type;
         int offset;
 
+        SymRef();
+        SymRef(int offset);
+        SymRef(const SymRef &ref);
+        SymRef(const std::string name, SymRefType type, int offset);
+
         SymRef operator+(int offset) const;
     };
 
@@ -428,7 +433,15 @@ class Compiler {
         byte scale;
         byte index;
         byte base;
-        int disp;
+
+        SymRef ref;
+
+        MemRef(byte mod, byte rm);
+        MemRef(byte mod, byte rm, int disp);
+        MemRef(byte mod, byte rm, const SymRef &ref);
+        MemRef(byte mod, byte rm, byte scale, byte index, byte base);
+        MemRef(byte mod, byte rm, byte scale, byte index, byte base, int disp);
+        MemRef(byte mod, byte rm, byte scale, byte index, byte base, const SymRef &ref);
     };
 
     std::map<SectionID, ByteArray> sections;
@@ -468,17 +481,19 @@ public:
 
     void function(const std::string &name);
 
-    void symbol(const std::string &name);
-
     SymRef abs(const std::string &name) const;
     SymRef rel(const std::string &name) const;
 
     MemRef ref(Register reg) const;
     MemRef ref(int disp, Register reg) const;
+    MemRef ref(const SymRef &ref, Register reg) const;
     MemRef ref(int disp) const;
+    MemRef ref(const SymRef &ref) const;
     MemRef ref(Register base, Register index, byte scale) const;
     MemRef ref(int disp, Register base, Register index, byte scale) const;
+    MemRef ref(const SymRef &ref, Register base, Register index, byte scale) const;
     MemRef ref(int disp, Register index, byte scale) const;
+    MemRef ref(const SymRef &ref, Register index, byte scale) const;
     MemRef ref(Register index, byte scale) const;
 
     void relocate(const std::string &name, int value);
@@ -581,9 +596,15 @@ public:
     void fdivrp();
     void fidivrl(const MemRef &ref);
 
+    void constant(byte value);
+    void constant(int value);
+    void constant(double value);
+
     ByteArray writeOBJ() const;
     ByteArray writeEXE() const;
     ByteArray writeDLL(const std::string &name) const;
+
+    const ByteArray &getCode() const;
 
     Function compileFunction();
 

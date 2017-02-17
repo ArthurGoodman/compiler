@@ -9,8 +9,82 @@
 
 namespace x86 {
 
+Compiler::SymRef::SymRef()
+    : name("")
+    , offset(0) {
+}
+
+Compiler::SymRef::SymRef(int offset)
+    : name("")
+    , offset(offset) {
+}
+
+Compiler::SymRef::SymRef(const SymRef &ref)
+    : name(ref.name)
+    , type(ref.type)
+    , offset(ref.offset) {
+}
+
+Compiler::SymRef::SymRef(const std::string name, SymRefType type, int offset)
+    : name(name)
+    , type(type)
+    , offset(offset) {
+}
+
 Compiler::SymRef Compiler::SymRef::operator+(int offset) const {
-    return SymRef{ name, type, this->offset + offset };
+    return SymRef(name, type, this->offset + offset);
+}
+
+Compiler::MemRef::MemRef(byte mod, byte rm)
+    : mod(mod)
+    , rm(rm)
+    , scale(0)
+    , index(0)
+    , base(0) {
+}
+
+Compiler::MemRef::MemRef(byte mod, byte rm, int disp)
+    : mod(mod)
+    , rm(rm)
+    , scale(0)
+    , index(0)
+    , base(0)
+    , ref(disp) {
+}
+
+Compiler::MemRef::MemRef(byte mod, byte rm, const SymRef &ref)
+    : mod(mod)
+    , rm(rm)
+    , scale(0)
+    , index(0)
+    , base(0)
+    , ref(ref) {
+}
+
+Compiler::MemRef::MemRef(byte mod, byte rm, byte scale, byte index, byte base)
+    : mod(mod)
+    , rm(rm)
+    , scale(scale)
+    , index(index)
+    , base(base) {
+}
+
+Compiler::MemRef::MemRef(byte mod, byte rm, byte scale, byte index, byte base, int disp)
+    : mod(mod)
+    , rm(rm)
+    , scale(scale)
+    , index(index)
+    , base(base)
+    , ref(disp) {
+}
+
+Compiler::MemRef::MemRef(byte mod, byte rm, byte scale, byte index, byte base, const SymRef &ref)
+    : mod(mod)
+    , rm(rm)
+    , scale(scale)
+    , index(index)
+    , base(base)
+    , ref(ref) {
 }
 
 void Compiler::rdata(const std::string &name, const byte *data, uint size) {
@@ -46,10 +120,6 @@ void Compiler::function(const std::string &name) {
     funcs << name;
 }
 
-void Compiler::symbol(const std::string &name) {
-    pushSymbol(name, "", 0);
-}
-
 Compiler::SymRef Compiler::abs(const std::string &name) const {
     return { name, RefAbs, 0 };
 }
@@ -60,38 +130,49 @@ Compiler::SymRef Compiler::rel(const std::string &name) const {
 
 Compiler::MemRef Compiler::ref(Register reg) const {
     if (reg == EBP)
-        return { Disp8, reg, 0, 0, 0, 0 };
+        return MemRef(Disp8, reg);
     else if (reg == ESP)
-        return { Disp0, 4, 1, reg, reg, 0 };
+        return MemRef(Disp0, 4, 1, reg, reg);
     else
-        return { Disp0, reg, 0, 0, 0, 0 };
+        return MemRef(Disp0, reg);
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register reg) const {
     if (isByte(disp)) {
         if (reg == ESP)
-            return { Disp8, 4, 1, reg, reg, disp };
+            return MemRef(Disp8, 4, 1, reg, reg, disp);
         else
-            return { Disp8, reg, 0, 0, 0, disp };
+            return MemRef(Disp8, reg, disp);
     } else {
         if (reg == ESP)
-            return { Disp32, 4, 1, reg, reg, disp };
+            return MemRef(Disp32, 4, 1, reg, reg, disp);
         else
-            return { Disp32, reg, 0, 0, 0, disp };
+            return MemRef(Disp32, reg, disp);
     }
 }
 
+Compiler::MemRef Compiler::ref(const SymRef &ref, Register reg) const {
+    if (reg == ESP)
+        return MemRef(Disp32, 4, 1, reg, reg, ref);
+    else
+        return MemRef(Disp32, reg, ref);
+}
+
 Compiler::MemRef Compiler::ref(int disp) const {
-    return { Disp0, 5, 0, 0, 0, disp };
+    return MemRef(Disp0, 5, disp);
+}
+
+Compiler::MemRef Compiler::ref(const SymRef &ref) const {
+    return MemRef(Disp0, 5, ref);
 }
 
 Compiler::MemRef Compiler::ref(Register base, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
     else if (base == EBP)
-        return { Disp8, 4, scale, index, base, 0 };
+        return MemRef(Disp8, 4, scale, index, base);
     else
-        return { Disp0, 4, scale, index, base, 0 };
+        return MemRef(Disp0, 4, scale, index, base);
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register base, Register index, byte scale) const {
@@ -99,44 +180,51 @@ Compiler::MemRef Compiler::ref(int disp, Register base, Register index, byte sca
         if (index == ESP)
             throw std::runtime_error("%esp cannot be an index");
         else
-            return { Disp8, 4, scale, index, base, disp };
+            return MemRef(Disp8, 4, scale, index, base, disp);
     } else {
         if (index == ESP)
             throw std::runtime_error("%esp cannot be an index");
         else
-            return { Disp32, 4, scale, index, base, disp };
+            return MemRef(Disp32, 4, scale, index, base, disp);
     }
+}
+
+Compiler::MemRef Compiler::ref(const SymRef &ref, Register base, Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+    else
+        return MemRef(Disp32, 4, scale, index, base, ref);
 }
 
 Compiler::MemRef Compiler::ref(int disp, Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
     else
-        return { Disp0, 4, scale, index, 5, disp };
+        return MemRef(Disp0, 4, scale, index, 5, disp);
+}
+
+Compiler::MemRef Compiler::ref(const SymRef &ref, Register index, byte scale) const {
+    if (index == ESP)
+        throw std::runtime_error("%esp cannot be an index");
+    else
+        return MemRef(Disp0, 4, scale, index, 5, ref);
 }
 
 Compiler::MemRef Compiler::ref(Register index, byte scale) const {
     if (index == ESP)
         throw std::runtime_error("%esp cannot be an index");
     else
-        return { Disp0, 4, scale, index, 5, 0 };
+        return MemRef(Disp0, 4, scale, index, 5);
 }
 
 void Compiler::relocate(const std::string &name, int value) {
-    bool found = false;
-
     for (auto &reloc : relocs)
         if (reloc.name == name) {
-            found = true;
-
             if (reloc.type == RefAbs)
                 *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) += value;
             else
                 *reinterpret_cast<int *>(section(TEXT).data() + reloc.offset) += value - reinterpret_cast<int>(section(TEXT).data() + reloc.offset + 4);
         }
-
-    if (!found)
-        throw std::runtime_error("undefined symbol '" + name + "'");
 }
 
 void Compiler::push(Register reg) {
@@ -514,6 +602,18 @@ void Compiler::fidivrl(const MemRef &ref) {
     instr(0xda, 7, ref);
 }
 
+void Compiler::constant(byte value) {
+    gen(value);
+}
+
+void Compiler::constant(int value) {
+    gen(value);
+}
+
+void Compiler::constant(double value) {
+    gen(value);
+}
+
 ByteArray Compiler::writeOBJ() const {
     ByteArray image;
 
@@ -655,6 +755,10 @@ ByteArray Compiler::writeDLL(const std::string & /*name*/) const {
     return image;
 }
 
+const ByteArray &Compiler::getCode() const {
+    return section(TEXT);
+}
+
 Function Compiler::compileFunction() {
     return std::move(Function(std::move(section(TEXT))));
 }
@@ -675,11 +779,11 @@ void Compiler::instr(byte op, int imm) {
 
 void Compiler::instr(byte op, const SymRef &ref) {
     if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+        pushSymbol(ref.name, "", 0);
 
     instr(op, ref.offset);
 
-    pushReloc(Reloc{ ref.name, ref.type, sectionSize(TEXT) - 4 });
+    pushReloc({ ref.name, ref.type, sectionSize(TEXT) - 4 });
 }
 
 void Compiler::instr(byte op, byte reg, Register rm) {
@@ -698,7 +802,7 @@ void Compiler::instr(byte op, byte reg, Register rm, int imm) {
 
 void Compiler::instr(byte op, byte reg, Register rm, const SymRef &ref) {
     if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+        pushSymbol(ref.name, "", 0);
 
     instr(op, reg, rm, ref.offset);
 
@@ -714,9 +818,17 @@ void Compiler::instr(byte op, byte reg, const MemRef &rm) {
         gen(composeByte(log2(rm.scale), rm.index, rm.base));
 
     if (rm.mod == Disp8)
-        gen(static_cast<byte>(rm.disp));
-    else if (rm.mod == Disp32 || (rm.mod == Disp0 && (rm.rm == 5 || (rm.rm == 4 && rm.base == 5))))
-        gen(rm.disp);
+        gen(static_cast<byte>(rm.ref.offset));
+    else if (rm.mod == Disp32 || (rm.mod == Disp0 && (rm.rm == 5 || (rm.rm == 4 && rm.base == 5)))) {
+        gen(rm.ref.offset);
+
+        if (!rm.ref.name.empty()) {
+            if (!isSymbolDefined(rm.ref.name))
+                pushSymbol(rm.ref.name, "", 0);
+
+            pushReloc({ rm.ref.name, rm.ref.type, sectionSize(TEXT) - 4 });
+        }
+    }
 }
 
 void Compiler::instr(byte op, byte reg, const MemRef &rm, byte imm) {
@@ -731,11 +843,11 @@ void Compiler::instr(byte op, byte reg, const MemRef &rm, int imm) {
 
 void Compiler::instr(byte op, byte reg, const MemRef &rm, const SymRef &ref) {
     if (!isSymbolDefined(ref.name))
-        throw std::runtime_error("undefined symbol '" + ref.name + "'");
+        pushSymbol(ref.name, "", 0);
 
     instr(op, reg, rm, ref.offset);
 
-    pushReloc(Reloc{ ref.name, ref.type, sectionSize(TEXT) - 4 });
+    pushReloc({ ref.name, ref.type, sectionSize(TEXT) - 4 });
 }
 
 bool Compiler::isSectionDefined(SectionID id) const {

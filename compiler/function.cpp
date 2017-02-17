@@ -5,17 +5,8 @@ namespace x86 {
 Function::Function() {
 }
 
-Function::Function(const Function &f)
-    : code(f.code) {
-}
-
 Function::Function(Function &&f)
     : code(std::move(f.code)) {
-}
-
-Function &Function::operator=(const Function &f) {
-    code = f.code;
-    return *this;
 }
 
 Function &Function::operator=(Function &&f) {

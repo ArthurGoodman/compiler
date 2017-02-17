@@ -15,10 +15,8 @@ class Function {
 public:
     Function();
 
-    Function(const Function &f);
     Function(Function &&f);
 
-    Function &operator=(const Function &f);
     Function &operator=(Function &&f);
 
     int invoke(int n = 0, ...);
