@@ -27,9 +27,6 @@ int main() {
     // system("objdump -x a.o");
     // system("objdump -d a.o");
 
-    c.symbol("str");
-    c.symbol("puts");
-
     c.push(x86::EBP);
     c.push(x86::EBX);
     c.mov(x86::ESP, x86::EBP);
