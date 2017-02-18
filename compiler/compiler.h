@@ -498,28 +498,9 @@ public:
 
     void relocate(const std::string &name, int value);
 
-    void push(Register reg);
-    void push(const MemRef &ref);
-    void push(int value);
-    void push(const SymRef &ref);
-
-    void pop(Register reg);
-    void pop(const MemRef &ref);
-
-    void call(int disp);
-    void call(const SymRef &ref);
-    void call(Register reg);
-    void call(const MemRef &ref);
-
-    void mov(Register src, Register dst);
-    void mov(int imm, Register dst);
-    void mov(const SymRef &src, Register dst);
-    void mov(int imm, const MemRef &dst);
-    void mov(const SymRef &src, const MemRef &dst);
-    void mov(Register src, const MemRef &dst);
-    void mov(const MemRef &src, Register dst);
-
-    void lea(const MemRef &src, Register dst);
+    void constant(byte value);
+    void constant(int value);
+    void constant(double value);
 
     void add(int imm, Register dst);
     void add(const SymRef &ref, Register dst);
@@ -529,30 +510,12 @@ public:
     void add(Register src, const MemRef &dst);
     void add(const MemRef &src, Register dst);
 
-    void sub(int imm, Register dst);
-    void sub(const SymRef &ref, Register dst);
-    void subb(byte imm, const MemRef &dst);
-    void sub(int imm, const MemRef &dst);
-    void sub(const SymRef &ref, const MemRef &dst);
-    void sub(Register src, const MemRef &dst);
-    void sub(const MemRef &src, Register dst);
+    void _and(int imm, Register reg);
 
-    void leave();
-    void ret();
-
-    void nop();
-
-    void flds(const MemRef &ref);
-    void fldl(const MemRef &ref);
-    void fld(FPURegister reg);
-
-    void fsts(const MemRef &ref);
-    void fstl(const MemRef &ref);
-    void fst(FPURegister reg);
-
-    void fstps(const MemRef &ref);
-    void fstpl(const MemRef &ref);
-    void fstp(FPURegister reg);
+    void call(int disp);
+    void call(const SymRef &ref);
+    void call(Register reg);
+    void call(const MemRef &ref);
 
     void fadds(const MemRef &ref);
     void faddl(const MemRef &ref);
@@ -560,27 +523,6 @@ public:
     void faddp(FPURegister dst);
     void faddp();
     void fiaddl(const MemRef &ref);
-
-    void fsubs(const MemRef &ref);
-    void fsubl(const MemRef &ref);
-    void fsub(FPURegister src, FPURegister dst);
-    void fsubp(FPURegister dst);
-    void fsubp();
-    void fisubl(const MemRef &ref);
-
-    void fsubrs(const MemRef &ref);
-    void fsubrl(const MemRef &ref);
-    void fsubr(FPURegister src, FPURegister dst);
-    void fsubrp(FPURegister dst);
-    void fsubrp();
-    void fisubrl(const MemRef &ref);
-
-    void fmuls(const MemRef &ref);
-    void fmull(const MemRef &ref);
-    void fmul(FPURegister src, FPURegister dst);
-    void fmulp(FPURegister dst);
-    void fmulp();
-    void fimull(const MemRef &ref);
 
     void fdivs(const MemRef &ref);
     void fdivl(const MemRef &ref);
@@ -596,9 +538,70 @@ public:
     void fdivrp();
     void fidivrl(const MemRef &ref);
 
-    void constant(byte value);
-    void constant(int value);
-    void constant(double value);
+    void flds(const MemRef &ref);
+    void fldl(const MemRef &ref);
+    void fld(FPURegister reg);
+
+    void fmuls(const MemRef &ref);
+    void fmull(const MemRef &ref);
+    void fmul(FPURegister src, FPURegister dst);
+    void fmulp(FPURegister dst);
+    void fmulp();
+    void fimull(const MemRef &ref);
+
+    void fsts(const MemRef &ref);
+    void fstl(const MemRef &ref);
+    void fst(FPURegister reg);
+
+    void fstps(const MemRef &ref);
+    void fstpl(const MemRef &ref);
+    void fstp(FPURegister reg);
+
+    void fsubs(const MemRef &ref);
+    void fsubl(const MemRef &ref);
+    void fsub(FPURegister src, FPURegister dst);
+    void fsubp(FPURegister dst);
+    void fsubp();
+    void fisubl(const MemRef &ref);
+
+    void fsubrs(const MemRef &ref);
+    void fsubrl(const MemRef &ref);
+    void fsubr(FPURegister src, FPURegister dst);
+    void fsubrp(FPURegister dst);
+    void fsubrp();
+    void fisubrl(const MemRef &ref);
+
+    void lea(const MemRef &src, Register dst);
+
+    void leave();
+
+    void mov(Register src, Register dst);
+    void mov(int imm, Register dst);
+    void mov(const SymRef &src, Register dst);
+    void mov(int imm, const MemRef &dst);
+    void mov(const SymRef &src, const MemRef &dst);
+    void mov(Register src, const MemRef &dst);
+    void mov(const MemRef &src, Register dst);
+
+    void nop();
+
+    void pop(Register reg);
+    void pop(const MemRef &ref);
+
+    void push(Register reg);
+    void push(const MemRef &ref);
+    void push(int value);
+    void push(const SymRef &ref);
+
+    void ret();
+
+    void sub(int imm, Register dst);
+    void sub(const SymRef &ref, Register dst);
+    void subb(byte imm, const MemRef &dst);
+    void sub(int imm, const MemRef &dst);
+    void sub(const SymRef &ref, const MemRef &dst);
+    void sub(Register src, const MemRef &dst);
+    void sub(const MemRef &src, Register dst);
 
     ByteArray writeOBJ() const;
     ByteArray writeEXE() const;
