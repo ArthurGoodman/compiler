@@ -1,11 +1,4 @@
-Makefile
-*.log
-*.user
-*.Debug
-*.Release
-*.autosave
-*.o
-*.a
-*.exe
-*.dll
-*.stash
+bin/
+build/
+lib/
+.ycm_extra_conf.py
