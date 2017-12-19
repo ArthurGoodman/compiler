@@ -2,6 +2,4 @@
 
 #include <iostream>
 
-void compilerFunc() {
-    std::cout << "THIS IS COMPILER FUNC" << std::endl;
-}
+namespace x86_64 {} // namespace x86_64
