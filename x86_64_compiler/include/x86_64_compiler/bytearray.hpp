@@ -7,8 +7,9 @@
 
 namespace x86_64 {
 
-class ByteArray final {
-public:
+class ByteArray final
+{
+public: // methods
     explicit ByteArray();
     explicit ByteArray(const ByteArray &array);
     explicit ByteArray(ByteArray &&array);
@@ -16,32 +17,72 @@ public:
     ByteArray &operator=(const ByteArray &array);
     ByteArray &operator=(ByteArray &&array);
 
+    uint8_t *push(const uint8_t *data, std::size_t size);
+
+    template <class T>
+    uint8_t *push(const T &value);
+
+    template <class T>
+    T *push();
+
+    void pop(std::size_t size);
+
+    template <class T>
+    T pop();
+
+    uint8_t operator[](std::size_t index) const;
+    uint8_t &operator[](std::size_t index);
+
     const uint8_t *data() const;
     uint8_t *data();
 
     std::size_t size() const;
+    std::size_t capacity() const;
 
-    void push(const uint8_t *data, std::size_t size);
-
-    template <class T>
-    void push(const T &value);
+    void write(const std::string &file_name) const;
 
     friend std::ostream &operator<<(
         std::ostream &stream,
         const ByteArray &array);
 
-private:
+private: // methods
+    uint8_t *back(std::size_t size);
+
+private: // fields
     std::vector<uint8_t> _data;
 };
 
 template <class T>
-inline void ByteArray::push(const T &value) {
+uint8_t *ByteArray::push(const T &value)
+{
     push(reinterpret_cast<const uint8_t *>(&value), sizeof(T));
+    return back(sizeof(T));
 }
 
 template <>
-inline void ByteArray::push<ByteArray>(const ByteArray &array) {
+inline uint8_t *ByteArray::push(const ByteArray &array)
+{
     push(array.data(), array.size());
+    return back(array.size());
 }
 
+template <class T>
+T *ByteArray::push()
+{
+    push(nullptr, sizeof(T));
+    return reinterpret_cast<T *>(back(sizeof(T)));
+}
+
+template <class T>
+T ByteArray::pop()
+{
+    T value = *reinterpret_cast<T *>(back(sizeof(T)));
+    pop(sizeof(T));
+    return value;
+}
+
+inline uint8_t *ByteArray::back(std::size_t size)
+{
+    return data() + this->size() - size;
+}
 } // namespace x86_64
