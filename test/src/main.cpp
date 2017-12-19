@@ -1,16 +1,16 @@
-#include <x86_64_compiler/bytearray.hpp>
+#include <x86_64_compiler/compiler.hpp>
 
 #include <iostream>
 
-int main() {
-    x86_64::ByteArray array;
+int main()
+{
+    x86_64::Compiler c;
 
-    array.push(123);
-    array.push(456);
-    array.push(789);
+    c.constant(int8_t{100});
+    c.constant(200);
+    c.constant(3.14);
 
-    std::cout << array << std::endl;
-    std::cout << array.size() << std::endl;
+    std::cout << c.getCode() << std::endl;
 
     return 0;
 }
