@@ -4,4 +4,4 @@ add_executable(${X86_64_TEST}
     ${X86_64_TEST_SRC})
 
 target_link_libraries(${X86_64_TEST}
-    ${X86_64_COMPILER})
+    PRIVATE ${X86_64_COMPILER})
