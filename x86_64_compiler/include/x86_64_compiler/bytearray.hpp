@@ -85,4 +85,5 @@ inline uint8_t *ByteArray::back(std::size_t size)
 {
     return data() + this->size() - size;
 }
+
 } // namespace x86_64

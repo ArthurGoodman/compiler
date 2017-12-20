@@ -34,6 +34,58 @@ const ByteArray &Compiler::getCode() const
     return section(TEXT);
 }
 
+Compiler::Ref Compiler::reg(X86Register reg) const
+{
+    return Ref(markReg(reg));
+}
+
+Compiler::Ref Compiler::reg(X64Register reg) const
+{
+    return Ref(markReg(reg));
+}
+
+Compiler::Ref Compiler::mem(X86Register reg) const
+{
+    return Ref(0, NOREG, markReg(reg));
+}
+
+Compiler::Ref Compiler::mem(X64Register reg) const
+{
+    return Ref(0, NOREG, markReg(reg));
+}
+
+Compiler::Ref Compiler::mem(X86Register index, int8_t scale) const
+{
+    return Ref(scale, markReg(index), NOREG);
+}
+
+Compiler::Ref Compiler::mem(X64Register index, int8_t scale) const
+{
+    return Ref(scale, markReg(index), NOREG);
+}
+
+Compiler::Ref Compiler::mem(X86Register base, X86Register index, int8_t scale)
+    const
+{
+    return Ref(scale, markReg(index), markReg(base));
+}
+
+Compiler::Ref Compiler::mem(X64Register base, X64Register index, int8_t scale)
+    const
+{
+    return Ref(scale, markReg(index), markReg(base));
+}
+
+Compiler::Ref Compiler::abs(const std::string &name)
+{
+    return Ref(Ref::SymRef::Type::Abs, name);
+}
+
+Compiler::Ref Compiler::rel(const std::string &name)
+{
+    return Ref(Ref::SymRef::Type::Rel, name);
+}
+
 void Compiler::constant(int8_t value)
 {
     gen(value);
