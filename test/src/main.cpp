@@ -8,15 +8,16 @@ namespace {
 
 constexpr int c_spacing = 50;
 
-#define X(command)                                                             \
-    command;                                                                   \
-    s << #command                                                              \
-      << std::string(                                                          \
-             static_cast<std::size_t>(                                         \
-                 std::max(0, c_spacing - static_cast<int>(strlen(#command)))), \
-             ' ')                                                              \
-      << c.getCode() << std::endl;                                             \
-    c.reset();
+#define X(command, correct)                                                   \
+    {                                                                         \
+        command;                                                              \
+        std::stringstream tmp;                                                \
+        tmp << c.getCode();                                                   \
+        s << #command                                                         \
+          << std::string(std::max(0, c_spacing - int{strlen(#command)}), ' ') \
+          << tmp.str() << (tmp.str() == correct ? " +" : " -") << std::endl;  \
+        c.reset();                                                            \
+    }
 
 } // anonymous namespace
 
