@@ -4,36 +4,33 @@
 #include <iostream>
 #include <sstream>
 
-namespace {
-
-constexpr int c_spacing = 50;
-
-#define X(command, correct)                                                   \
-    {                                                                         \
-        command;                                                              \
-        std::stringstream tmp;                                                \
-        tmp << c.getCode();                                                   \
-        s << #command                                                         \
-          << std::string(std::max(0, c_spacing - int{strlen(#command)}), ' ') \
-          << tmp.str() << (tmp.str() == correct ? " +" : " -") << std::endl;  \
-        c.reset();                                                            \
-    }
-
-} // anonymous namespace
-
 int main() try
 {
     using namespace x86_64;
 
     Compiler c;
-    std::stringstream s;
+    std::ofstream txt("dump.txt");
+    std::ofstream bin("dump.bin", std::ios::binary);
+
+#define X(command, correct)                                                    \
+    {                                                                          \
+        command;                                                               \
+        const auto &code = c.getCode();                                        \
+        code.write(bin);                                                       \
+        std::stringstream tmp;                                                 \
+        tmp << code;                                                           \
+        txt << #command                                                        \
+            << std::string(std::max(0, 50 - int{strlen(#command)}), ' ')       \
+            << tmp.str() << (tmp.str() == correct ? " +" : " -") << std::endl; \
+        c.reset();                                                             \
+    }
 
 #include "commands.txt"
 
-    std::cout << s.str();
+    txt << std::flush;
+    bin << std::flush;
 
-    std::ofstream fs("dump.txt");
-    fs << s.str();
+    system("objdump -D -b binary -m i386:x86-64 dump.bin | tee disasm.txt");
 
     return 0;
 }

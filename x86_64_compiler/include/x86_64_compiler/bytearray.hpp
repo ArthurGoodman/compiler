@@ -40,6 +40,7 @@ public: // methods
     std::size_t capacity() const;
 
     void write(const std::string &file_name) const;
+    void write(std::ostream &stream) const;
 
     friend std::ostream &operator<<(
         std::ostream &stream,
@@ -79,11 +80,6 @@ T ByteArray::pop()
     T value = *reinterpret_cast<T *>(back(sizeof(T)));
     pop(sizeof(T));
     return value;
-}
-
-inline uint8_t *ByteArray::back(std::size_t size)
-{
-    return data() + this->size() - size;
 }
 
 } // namespace x86_64

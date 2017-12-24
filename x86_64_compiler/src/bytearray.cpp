@@ -85,6 +85,11 @@ std::size_t ByteArray::capacity() const
 void ByteArray::write(const std::string &file_name) const
 {
     std::ofstream stream(file_name, std::ios::binary);
+    write(stream);
+}
+
+void ByteArray::write(std::ostream &stream) const
+{
     stream.write(
         reinterpret_cast<const char *>(m_data.data()),
         static_cast<std::streamsize>(size()));
@@ -110,6 +115,11 @@ std::ostream &operator<<(std::ostream &stream, const ByteArray &array)
     stream.copyfmt(state);
 
     return stream;
+}
+
+uint8_t *ByteArray::back(std::size_t size)
+{
+    return data() + this->size() - size;
 }
 
 } // namespace x86_64
