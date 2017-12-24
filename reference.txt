@@ -1177,9 +1177,57 @@ mov  0x7f(,%r13,2),%eax                           42 8b 04 6d 7f 00 00 00
 mov  0x7f(,%r14,2),%eax                           42 8b 04 75 7f 00 00 00
 mov  0x7f(,%r15,2),%eax                           42 8b 04 7d 7f 00 00 00
 mov  %eax,0x7fffffff                              89 04 25 ff ff ff 7f
+mov  %ecx,0x7fffffff                              89 0c 25 ff ff ff 7f
+mov  %edx,0x7fffffff                              89 14 25 ff ff ff 7f
+mov  %ebx,0x7fffffff                              89 1c 25 ff ff ff 7f
+mov  %esp,0x7fffffff                              89 24 25 ff ff ff 7f
+mov  %ebp,0x7fffffff                              89 2c 25 ff ff ff 7f
+mov  %esi,0x7fffffff                              89 34 25 ff ff ff 7f
+mov  %edi,0x7fffffff                              89 3c 25 ff ff ff 7f
+mov  %rax,0x7fffffff                              48 89 04 25 ff ff ff 7f
+mov  %rcx,0x7fffffff                              48 89 0c 25 ff ff ff 7f
+mov  %rdx,0x7fffffff                              48 89 14 25 ff ff ff 7f
+mov  %rbx,0x7fffffff                              48 89 1c 25 ff ff ff 7f
+mov  %rsp,0x7fffffff                              48 89 24 25 ff ff ff 7f
+mov  %rbp,0x7fffffff                              48 89 2c 25 ff ff ff 7f
+mov  %rsi,0x7fffffff                              48 89 34 25 ff ff ff 7f
+mov  %rdi,0x7fffffff                              48 89 3c 25 ff ff ff 7f
+mov  %r8,0x7fffffff                               4c 89 04 25 ff ff ff 7f
+mov  %r9,0x7fffffff                               4c 89 0c 25 ff ff ff 7f
+mov  %r10,0x7fffffff                              4c 89 14 25 ff ff ff 7f
+mov  %r11,0x7fffffff                              4c 89 1c 25 ff ff ff 7f
+mov  %r12,0x7fffffff                              4c 89 24 25 ff ff ff 7f
+mov  %r13,0x7fffffff                              4c 89 2c 25 ff ff ff 7f
+mov  %r14,0x7fffffff                              4c 89 34 25 ff ff ff 7f
+mov  %r15,0x7fffffff                              4c 89 3c 25 ff ff ff 7f
 mov  %eax,0xffffffff                              a3 ff ff ff ff 00 00 00 00
+mov  %rax,0xffffffff                              48 a3 ff ff ff ff 00 00 00 00
+mov  0x7fffffff,%eax                              8b 04 25 ff ff ff 7f
+mov  0x7fffffff,%ecx                              8b 0c 25 ff ff ff 7f
+mov  0x7fffffff,%edx                              8b 14 25 ff ff ff 7f
+mov  0x7fffffff,%ebx                              8b 1c 25 ff ff ff 7f
+mov  0x7fffffff,%esp                              8b 24 25 ff ff ff 7f
+mov  0x7fffffff,%ebp                              8b 2c 25 ff ff ff 7f
+mov  0x7fffffff,%esi                              8b 34 25 ff ff ff 7f
+mov  0x7fffffff,%edi                              8b 3c 25 ff ff ff 7f
+mov  0x7fffffff,%rax                              48 8b 04 25 ff ff ff 7f
+mov  0x7fffffff,%rcx                              48 8b 0c 25 ff ff ff 7f
+mov  0x7fffffff,%rdx                              48 8b 14 25 ff ff ff 7f
+mov  0x7fffffff,%rbx                              48 8b 1c 25 ff ff ff 7f
+mov  0x7fffffff,%rsp                              48 8b 24 25 ff ff ff 7f
+mov  0x7fffffff,%rbp                              48 8b 2c 25 ff ff ff 7f
+mov  0x7fffffff,%rsi                              48 8b 34 25 ff ff ff 7f
+mov  0x7fffffff,%rdi                              48 8b 3c 25 ff ff ff 7f
+mov  0x7fffffff,%r8                               4c 8b 04 25 ff ff ff 7f
+mov  0x7fffffff,%r9                               4c 8b 0c 25 ff ff ff 7f
+mov  0x7fffffff,%r10                              4c 8b 14 25 ff ff ff 7f
+mov  0x7fffffff,%r11                              4c 8b 1c 25 ff ff ff 7f
+mov  0x7fffffff,%r12                              4c 8b 24 25 ff ff ff 7f
+mov  0x7fffffff,%r13                              4c 8b 2c 25 ff ff ff 7f
+mov  0x7fffffff,%r14                              4c 8b 34 25 ff ff ff 7f
+mov  0x7fffffff,%r15                              4c 8b 3c 25 ff ff ff 7f
+mov  0xffffffff,%eax                              a1 ff ff ff ff 00 00 00 00
+mov  0xffffffff,%rax                              48 a1 ff ff ff ff 00 00 00 00
 movb $0xff,0x7fffffff                             c6 04 25 ff ff ff 7f ff
 movl $0xff,0x7fffffff                             c7 04 25 ff ff ff 7f ff 00 00 00
 movq $0xff,0x7fffffff                             48 c7 04 25 ff ff ff 7f ff 00 00 00
-mov  0x7fffffff,%eax                              8b 04 25 ff ff ff 7f
-mov  0xffffffff,%eax                              a1 ff ff ff ff 00 00 00 00
