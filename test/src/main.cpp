@@ -1,16 +1,42 @@
 #include <x86_64_compiler/compiler.hpp>
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
 
-int main()
+namespace {
+
+constexpr int c_spacing = 50;
+
+#define X(command)                                                             \
+    command;                                                                   \
+    s << #command                                                              \
+      << std::string(                                                          \
+             static_cast<std::size_t>(                                         \
+                 std::max(0, c_spacing - static_cast<int>(strlen(#command)))), \
+             ' ')                                                              \
+      << c.getCode() << std::endl;                                             \
+    c.reset();
+
+} // anonymous namespace
+
+int main() try
 {
-    x86_64::Compiler c;
+    using namespace x86_64;
 
-    c.constant(int8_t{100});
-    c.constant(200);
-    c.constant(3.14);
+    Compiler c;
+    std::stringstream s;
 
-    std::cout << c.getCode() << std::endl;
+#include "commands.txt"
+
+    std::cout << s.str();
+
+    std::ofstream fs("dump.txt");
+    fs << s.str();
 
     return 0;
+}
+catch (const std::exception &e)
+{
+    std::cout << "error: " << e.what() << std::endl;
 }

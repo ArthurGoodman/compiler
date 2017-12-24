@@ -49,7 +49,7 @@ private: // methods
     uint8_t *back(std::size_t size);
 
 private: // fields
-    std::vector<uint8_t> _data;
+    std::vector<uint8_t> m_data;
 };
 
 template <class T>

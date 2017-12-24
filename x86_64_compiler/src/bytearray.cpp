@@ -11,24 +11,24 @@ ByteArray::ByteArray()
 }
 
 ByteArray::ByteArray(const ByteArray &array)
-    : _data{array._data}
+    : m_data{array.m_data}
 {
 }
 
 ByteArray::ByteArray(ByteArray &&array)
-    : _data{std::move(array._data)}
+    : m_data{std::move(array.m_data)}
 {
 }
 
 ByteArray &ByteArray::operator=(const ByteArray &array)
 {
-    _data = array._data;
+    m_data = array.m_data;
     return *this;
 }
 
 ByteArray &ByteArray::operator=(ByteArray &&array)
 {
-    _data = std::move(array._data);
+    m_data = std::move(array.m_data);
     return *this;
 }
 
@@ -37,9 +37,9 @@ uint8_t *ByteArray::push(const uint8_t *data, std::size_t size)
     if (size > 0)
     {
         if (data)
-            _data.insert(_data.end(), data, data + size);
+            m_data.insert(m_data.end(), data, data + size);
         else
-            _data.insert(_data.end(), size, 0);
+            m_data.insert(m_data.end(), size, 0);
     }
 
     return back(size);
@@ -47,46 +47,46 @@ uint8_t *ByteArray::push(const uint8_t *data, std::size_t size)
 
 void ByteArray::pop(std::size_t size)
 {
-    _data.erase(
-        _data.end() - static_cast<int32_t>(std::min(size, _data.size())),
-        _data.end());
+    m_data.erase(
+        m_data.end() - static_cast<int32_t>(std::min(size, m_data.size())),
+        m_data.end());
 }
 
 uint8_t ByteArray::operator[](std::size_t index) const
 {
-    return _data[index];
+    return m_data[index];
 }
 
 uint8_t &ByteArray::operator[](std::size_t index)
 {
-    return _data[index];
+    return m_data[index];
 }
 
 const uint8_t *ByteArray::data() const
 {
-    return _data.data();
+    return m_data.data();
 }
 
 uint8_t *ByteArray::data()
 {
-    return _data.data();
+    return m_data.data();
 }
 
 std::size_t ByteArray::size() const
 {
-    return _data.size();
+    return m_data.size();
 }
 
 std::size_t ByteArray::capacity() const
 {
-    return _data.capacity();
+    return m_data.capacity();
 }
 
 void ByteArray::write(const std::string &file_name) const
 {
     std::ofstream stream(file_name, std::ios::binary);
     stream.write(
-        reinterpret_cast<const char *>(_data.data()),
+        reinterpret_cast<const char *>(m_data.data()),
         static_cast<std::streamsize>(size()));
 }
 
@@ -97,7 +97,7 @@ std::ostream &operator<<(std::ostream &stream, const ByteArray &array)
     std::ios state(nullptr);
     state.copyfmt(stream);
 
-    for (const uint8_t &value : array._data)
+    for (const uint8_t &value : array.m_data)
     {
         if (!first)
             stream << " ";

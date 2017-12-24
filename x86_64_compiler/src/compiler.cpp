@@ -1,6 +1,14 @@
 #include "x86_64_compiler/compiler.hpp"
 
+#include <stdexcept>
+
 namespace x86_64 {
+
+void Compiler::reset()
+{
+    m_sections.clear();
+    m_symbols.clear();
+}
 
 void Compiler::rdata(
     const std::string &name,
@@ -34,56 +42,42 @@ const ByteArray &Compiler::getCode() const
     return section(TEXT);
 }
 
-Compiler::Ref Compiler::reg(X86Register reg) const
+Compiler::RegRef Compiler::reg(const RegRef &reg) const
 {
-    return Ref(markReg(reg));
+    return reg;
 }
 
-Compiler::Ref Compiler::reg(X64Register reg) const
+Compiler::MemRef Compiler::mem(int32_t disp) const
 {
-    return Ref(markReg(reg));
+    return disp + MemRef(0, NOREG, NOREG);
 }
 
-Compiler::Ref Compiler::mem(X86Register reg) const
+Compiler::MemRef Compiler::mem(const RegRef &reg) const
 {
-    return Ref(0, NOREG, markReg(reg));
+    return MemRef(0, NOREG, reg);
 }
 
-Compiler::Ref Compiler::mem(X64Register reg) const
+Compiler::MemRef Compiler::mem(const RegRef &index, int8_t scale) const
 {
-    return Ref(0, NOREG, markReg(reg));
+    return MemRef(scale, index, NOREG);
 }
 
-Compiler::Ref Compiler::mem(X86Register index, int8_t scale) const
+Compiler::MemRef Compiler::mem(
+    const RegRef &base,
+    const RegRef &index,
+    int8_t scale) const
 {
-    return Ref(scale, markReg(index), NOREG);
+    return MemRef(scale, index, base);
 }
 
-Compiler::Ref Compiler::mem(X64Register index, int8_t scale) const
+Compiler::SymRef Compiler::abs(const std::string &name)
 {
-    return Ref(scale, markReg(index), NOREG);
+    return SymRef(SymRef::Type::Abs, name);
 }
 
-Compiler::Ref Compiler::mem(X86Register base, X86Register index, int8_t scale)
-    const
+Compiler::SymRef Compiler::rel(const std::string &name)
 {
-    return Ref(scale, markReg(index), markReg(base));
-}
-
-Compiler::Ref Compiler::mem(X64Register base, X64Register index, int8_t scale)
-    const
-{
-    return Ref(scale, markReg(index), markReg(base));
-}
-
-Compiler::Ref Compiler::abs(const std::string &name)
-{
-    return Ref(Ref::SymRef::Type::Abs, name);
-}
-
-Compiler::Ref Compiler::rel(const std::string &name)
-{
-    return Ref(Ref::SymRef::Type::Rel, name);
+    return SymRef(SymRef::Type::Rel, name);
 }
 
 void Compiler::constant(int8_t value)
@@ -101,19 +95,49 @@ void Compiler::constant(double value)
     gen(value);
 }
 
+void Compiler::mov(const Ref &src, const Ref &dst)
+{
+    gen(0x0);
+}
+
+void Compiler::movb(uint8_t imm, const Ref &dst)
+{
+    gen(0x1);
+}
+
+void Compiler::movl(uint32_t imm, const Ref &dst)
+{
+    gen(0x2);
+}
+
+void Compiler::movq(uint64_t imm, const Ref &dst)
+{
+    gen(0x3);
+}
+
 const ByteArray &Compiler::section(SectionID id) const
 {
-    return sections.at(id);
+    if (!isSectionDefined(id))
+    {
+        static const char *section_names[] = {
+            "", "TEXT", "DATA", "BSS", "RDATA", "EDATA", "IDATA", "RELOC",
+        };
+
+        throw std::runtime_error(
+            "section " + std::string(section_names[id]) + " is not defined");
+    }
+
+    return m_sections.at(id);
 }
 
 ByteArray &Compiler::section(SectionID id)
 {
-    return sections[id];
+    return m_sections[id];
 }
 
 bool Compiler::isSectionDefined(SectionID id) const
 {
-    return sections.find(id) != sections.end();
+    return m_sections.find(id) != m_sections.end();
 }
 
 std::size_t Compiler::sectionSize(SectionID id) const
@@ -123,7 +147,7 @@ std::size_t Compiler::sectionSize(SectionID id) const
 
 bool Compiler::isSymbolDefined(const std::string &name) const
 {
-    return symbols.find(name) != symbols.end();
+    return m_symbols.find(name) != m_symbols.end();
 }
 
 void Compiler::pushSymbol(
@@ -134,7 +158,7 @@ void Compiler::pushSymbol(
     if (isSymbolDefined(name))
         throw std::runtime_error("symbol '" + name + "' is already defined");
 
-    symbols[name] = Symbol{base_symbol, offset};
+    m_symbols[name] = Symbol{base_symbol, offset};
 }
 
 } // namespace x86_64
