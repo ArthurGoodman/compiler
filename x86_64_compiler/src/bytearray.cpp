@@ -1,5 +1,4 @@
 #include "x86_64_compiler/bytearray.hpp"
-
 #include <fstream>
 #include <iomanip>
 #include <iostream>
