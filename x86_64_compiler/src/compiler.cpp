@@ -6,6 +6,15 @@
 
 namespace x86_64 {
 
+constexpr uint8_t c_mod_disp0 = 0;
+constexpr uint8_t c_mod_disp8 = 1;
+constexpr uint8_t c_mod_disp32 = 2;
+constexpr uint8_t c_mod_reg = 3;
+
+constexpr uint8_t c_x86_mask = 7;
+
+constexpr uint8_t c_address_size_preffix = 0x67;
+
 constexpr uint8_t c_opcode_field_w = 1 << 0;
 constexpr uint8_t c_opcode_field_d = 1 << 1;
 
@@ -96,19 +105,23 @@ public: // methods
 private: // methods
     void mov(const Imm &imm, const Ref &dst);
 
-    void instr(uint8_t opcode, const Ref &op1, const Ref &op2);
-    void instr(uint8_t opcode, const Imm &imm, const RegRef &reg_reg);
-    void instr(uint8_t opcode, uint8_t ext, const Imm &imm, const Ref &op1);
+    void instr(uint8_t opcode, const Ref &op1, const Ref &dst);
+    void instr(uint8_t opcode, int8_t reg, Size size, const Ref &rm_ref);
+    void instr(uint8_t opcode, const Imm &imm, int8_t reg);
+    void instr(uint8_t opcode, int8_t ext, const Imm &imm, const Ref &dst);
 
     void genREXPreffix(
-        const RegRef &reg,
-        const RegRef &index,
-        const RegRef &base);
+        const int8_t &reg,
+        Size size,
+        const int8_t &index,
+        const int8_t &base);
 
-    void genMemRef(const RegRef &reg_ref, const MemRef &mem_ref);
-    void genSIBByte(const MemRef &mem_ref);
+    void genRef(int8_t reg, const Ref &ref);
+    void genRef(int8_t reg, const RegRef &reg_ref);
+    void genRef(int8_t reg, const MemRef &mem_ref);
+    void genSIB(const MemRef &mem_ref);
 
-    void composeByte(int8_t a, int8_t b, int8_t c);
+    void genCompositeByte(int8_t a, int8_t b, int8_t c);
 
     template <class T>
     void gen(const T &value);
@@ -698,41 +711,37 @@ void Compiler::Impl::movq(uint64_t imm, const Ref &dst)
 
 void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
 {
-    if (dst.type == Ref::Type::Reg)
-    {
-        if (dst.reg.size == Size::Byte)
-        {
-            instr(0xb0, imm, dst.reg);
-        }
-        else
-        {
-            if (dst.reg.size == Size::Qword && isDword(imm.qword))
-            {
-                instr(0xc6, 0, imm, dst.reg);
-            }
-            else
-            {
-                instr(0xb8, imm, dst.reg);
-            }
-        }
-    }
-    else
+    if (dst.type == Ref::Type::Mem ||
+        (dst.reg.size == Size::Qword && isDword(imm.qword)))
     {
         instr(0xc6, 0, imm, dst);
     }
+    else
+    {
+        instr(dst.reg.size == Size::Byte ? 0xb0 : 0xb8, imm, dst.reg.reg);
+    }
 }
 
-void Compiler::Impl::instr(uint8_t opcode, const Ref &op1, const Ref &op2)
+void Compiler::Impl::instr(uint8_t opcode, const Ref &src, const Ref &dst)
 {
-    RegRef reg_ref = op1.type == Ref::Type::Reg ? op1.reg : op2.reg;
-    Ref rm_ref = op1.type == Ref::Type::Reg ? op2 : op1;
+    RegRef reg_ref = src.type == Ref::Type::Reg ? src.reg : dst.reg;
+    Ref rm_ref = src.type == Ref::Type::Reg ? dst : src;
 
-    if (op2.type == Ref::Type::Reg && op1.type != Ref::Type::Reg)
+    if (dst.type == Ref::Type::Reg && src.type != Ref::Type::Reg)
     {
         opcode += c_opcode_field_d;
     }
 
-    if (reg_ref.size != Size::Byte)
+    instr(opcode, reg_ref.reg, reg_ref.size, rm_ref);
+}
+
+void Compiler::Impl::instr(
+    uint8_t opcode,
+    int8_t reg,
+    Size size,
+    const Ref &rm_ref)
+{
+    if (size != Size::Byte)
     {
         opcode += c_opcode_field_w;
     }
@@ -741,61 +750,36 @@ void Compiler::Impl::instr(uint8_t opcode, const Ref &op1, const Ref &op2)
         ((rm_ref.mem.base != NOREG && rm_ref.mem.base.size != Size::Qword) ||
          (rm_ref.mem.index != NOREG && rm_ref.mem.index.size != Size::Qword)))
     {
-        gen(uint8_t{0x67});
+        gen(c_address_size_preffix);
     }
 
-    genREXPreffix(
-        reg_ref,
-        (rm_ref.type == Ref::Type::Mem && rm_ref.mem.scale != 0)
-            ? rm_ref.mem.index
-            : NOREG,
-        rm_ref.type == Ref::Type::Reg ? rm_ref.reg : rm_ref.mem.base);
+    int8_t index = rm_ref.type == Ref::Type::Mem ? rm_ref.mem.index.reg : -1;
+    int8_t base =
+        rm_ref.type == Ref::Type::Mem ? rm_ref.mem.base.reg : rm_ref.reg.reg;
 
+    genREXPreffix(reg, size, index, base);
     gen(opcode);
-
-    if (rm_ref.type == Ref::Type::Reg)
-    {
-        composeByte(3, reg_ref.reg & ~R8.reg, rm_ref.reg.reg & ~R8.reg);
-    }
-    else
-    {
-        genMemRef(reg_ref, rm_ref.mem);
-    }
+    genRef(reg, rm_ref);
 }
 
-void Compiler::Impl::instr(
-    uint8_t opcode,
-    const Imm &imm,
-    const RegRef &reg_ref)
+void Compiler::Impl::instr(uint8_t opcode, const Imm &imm, int8_t reg)
 {
-    genREXPreffix(NOREG, NOREG, reg_ref);
-    gen(static_cast<uint8_t>(opcode + (reg_ref.reg & ~R8.reg)));
+    genREXPreffix(-1, Size::None, -1, reg);
+    gen(static_cast<uint8_t>(opcode + (reg & c_x86_mask)));
     gen(imm);
 }
 
 void Compiler::Impl::instr(
     uint8_t opcode,
-    uint8_t ext,
+    int8_t ext,
     const Imm &imm,
-    const Ref &op1)
+    const Ref &dst)
 {
-    RegRef reg_ref;
-    if (imm.size == Size::Byte)
-    {
-        reg_ref = RegRef(static_cast<detail::ByteReg>(ext));
-    }
-    else if (imm.size == Size::Qword)
-    {
-        reg_ref = RegRef(static_cast<detail::QwordReg>(ext));
-    }
-    else
-    {
-        reg_ref = RegRef(static_cast<detail::DwordReg>(ext));
-    }
-    instr(opcode, reg_ref, op1);
+    instr(opcode, ext, imm.size, dst);
+
     if (imm.size == Size::Qword)
     {
-        gen(Imm(imm.dword));
+        gen(imm.dword);
     }
     else
     {
@@ -804,105 +788,73 @@ void Compiler::Impl::instr(
 }
 
 void Compiler::Impl::genREXPreffix(
-    const RegRef &reg,
-    const RegRef &index,
-    const RegRef &base)
+    const int8_t &reg,
+    Size size,
+    const int8_t &index,
+    const int8_t &base)
 {
-    uint8_t rex = c_rex;
+    uint8_t rex = c_rex_field_w * (size == Size::Qword) +
+                  c_rex_field_b * (base > c_x86_mask) +
+                  c_rex_field_x * (index > c_x86_mask) +
+                  c_rex_field_r * (reg > c_x86_mask);
 
-    if (reg.size == Size::Qword)
+    if (rex)
     {
-        rex += c_rex_field_w;
-    }
-
-    if (base.reg >= R8.reg)
-    {
-        rex += c_rex_field_b;
-    }
-
-    if (index.reg >= R8.reg)
-    {
-        rex += c_rex_field_x;
-    }
-
-    if (reg.reg >= R8.reg)
-    {
-        rex += c_rex_field_r;
-    }
-
-    if (rex != c_rex)
-    {
-        gen(rex);
+        gen(static_cast<uint8_t>(c_rex + rex));
     }
 }
 
-void Compiler::Impl::genMemRef(const RegRef &reg_ref, const MemRef &mem_ref)
+void Compiler::Impl::genRef(int8_t reg, const Ref &ref)
 {
-    int8_t mod;
-    int8_t rm = mem_ref.base.reg;
-
-    if ((mem_ref.disp == 0 && (mem_ref.base.reg & ~R8.reg) != 5) ||
-        (mem_ref.scale != 0 && mem_ref.base == NOREG))
+    if (ref.type == Ref::Type::Reg)
     {
-        mod = 0;
-    }
-    else if (isByte(mem_ref.disp))
-    {
-        mod = 1;
+        genRef(reg, ref.reg);
     }
     else
     {
-        mod = 2;
+        genRef(reg, ref.mem);
+    }
+}
+
+void Compiler::Impl::genRef(int8_t reg, const RegRef &reg_ref)
+{
+    genCompositeByte(c_mod_reg, reg & c_x86_mask, reg_ref.reg & c_x86_mask);
+}
+
+void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
+{
+    int8_t mod;
+    int8_t rm = mem_ref.base.reg & c_x86_mask;
+
+    if ((mem_ref.disp == 0 && (mem_ref.base.reg & c_x86_mask) != 5) ||
+        (mem_ref.scale && mem_ref.base == NOREG))
+    {
+        mod = c_mod_disp0;
+    }
+    else if (isByte(mem_ref.disp))
+    {
+        mod = c_mod_disp8;
+    }
+    else
+    {
+        mod = c_mod_disp32;
     }
 
     if (mem_ref.base == NOREG && mem_ref.index == NOREG)
     {
-        mod = 0;
+        mod = c_mod_disp0;
+        rm = 4;
+    }
+    else if (mem_ref.scale)
+    {
         rm = 4;
     }
 
-    if (mem_ref.scale != 0)
-    {
-        rm = 4;
-    }
+    genCompositeByte(mod, reg & c_x86_mask, rm);
 
-    composeByte(mod, reg_ref.reg & ~R8.reg, rm & ~R8.reg);
+    genSIB(mem_ref);
 
-    if (mem_ref.base == NOREG && mem_ref.index == NOREG)
-    {
-        genSIBByte(MemRef(
-            0,
-            static_cast<detail::QwordReg>(4),
-            static_cast<detail::QwordReg>(5)));
-    }
-    else if (mem_ref.scale != 0)
-    {
-        if (mem_ref.index.reg == 4)
-        {
-            throw std::runtime_error("cannot index by %esp in SIB");
-        }
-
-        if (mem_ref.base == NOREG)
-        {
-            genSIBByte(MemRef(
-                mem_ref.scale,
-                mem_ref.index,
-                static_cast<detail::QwordReg>(5)));
-        }
-        else
-        {
-            genSIBByte(mem_ref);
-        }
-    }
-    else if ((mem_ref.base.reg & ~R8.reg) == 4)
-    {
-        genSIBByte(MemRef(
-            0,
-            static_cast<detail::QwordReg>(4),
-            static_cast<detail::QwordReg>(4)));
-    }
-
-    if (mem_ref.disp != 0 || (mem_ref.base.reg & ~R8.reg) == 5)
+    if (mem_ref.disp || (mem_ref.base.reg & c_x86_mask) == 5)
     {
         if (isByte(mem_ref.disp) && mem_ref.base != NOREG)
         {
@@ -915,15 +867,45 @@ void Compiler::Impl::genMemRef(const RegRef &reg_ref, const MemRef &mem_ref)
     }
 }
 
-void Compiler::Impl::genSIBByte(const MemRef &mem_ref)
+void Compiler::Impl::genSIB(const MemRef &mem_ref)
 {
-    composeByte(
-        static_cast<int8_t>(log2(mem_ref.scale)),
-        mem_ref.index.reg & ~R8.reg,
-        mem_ref.base.reg & ~R8.reg);
+    int8_t scale = -1;
+    int8_t index = mem_ref.index.reg & c_x86_mask;
+    int8_t base = mem_ref.base.reg & c_x86_mask;
+
+    if (mem_ref.scale)
+    {
+        if (mem_ref.index.reg == 4)
+        {
+            throw std::runtime_error("cannot index by %esp in SIB");
+        }
+
+        scale = mem_ref.scale;
+
+        if (mem_ref.base == NOREG)
+        {
+            base = 5;
+        }
+    }
+    else if (mem_ref.base == NOREG && mem_ref.index == NOREG)
+    {
+        scale = 0;
+        index = 4;
+        base = 5;
+    }
+    else if ((mem_ref.base.reg & c_x86_mask) == 4)
+    {
+        scale = 0;
+        index = 4;
+    }
+
+    if (scale >= 0)
+    {
+        genCompositeByte(static_cast<int8_t>(log2(scale)), index, base);
+    }
 }
 
-void Compiler::Impl::composeByte(int8_t a, int8_t b, int8_t c)
+void Compiler::Impl::genCompositeByte(int8_t a, int8_t b, int8_t c)
 {
     gen(static_cast<int8_t>((a << 6) + (b << 3) + c));
 }

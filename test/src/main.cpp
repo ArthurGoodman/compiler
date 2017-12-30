@@ -12,6 +12,7 @@ int main() try
     std::ofstream txt("dump.txt");
     std::ofstream bin("dump.bin", std::ios::binary);
     std::stringstream s;
+    std::size_t correct_count = 0;
 
 #define X(command, correct)                                              \
     {                                                                    \
@@ -21,7 +22,10 @@ int main() try
         s << code;                                                       \
         std::string space(std::max(0, 50 - int{strlen(#command)}), ' '); \
         if (s.str() == correct)                                          \
+        {                                                                \
+            correct_count++;                                             \
             space[space.size() - 2] = '+';                               \
+        }                                                                \
         txt << #command << space << s.str()                              \
             << (s.str() == correct ? "" : std::string(" ~ ") + correct)  \
             << std::endl;                                                \
@@ -35,6 +39,8 @@ int main() try
     bin << std::flush;
 
     system("objdump -D -w -b binary -m i386:x86-64 dump.bin > disasm.txt");
+
+    std::cout << correct_count << std::endl;
 
     return 0;
 }
