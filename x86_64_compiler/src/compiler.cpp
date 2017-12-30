@@ -128,10 +128,34 @@ private: // methods
 
 public:
     template <class T>
-    static bool isByte(T value);
+    typename std::enable_if<std::is_signed<T>::value, bool>::type isByte(
+        T value)
+    {
+        return static_cast<int64_t>(value) >= INT8_MIN &&
+               static_cast<int64_t>(value) <= INT8_MAX;
+    }
 
     template <class T>
-    static bool isDword(T value);
+    typename std::enable_if<!std::is_signed<T>::value, bool>::type isByte(
+        T value)
+    {
+        return static_cast<uint64_t>(value) <= UINT8_MAX;
+    }
+
+    template <class T>
+    typename std::enable_if<std::is_signed<T>::value, bool>::type isDword(
+        T value)
+    {
+        return static_cast<int64_t>(value) >= INT32_MIN &&
+               static_cast<int64_t>(value) <= INT32_MAX;
+    }
+
+    template <class T>
+    typename std::enable_if<!std::is_signed<T>::value, bool>::type isDword(
+        T value)
+    {
+        return static_cast<uint64_t>(value) <= UINT32_MAX;
+    }
 
 private: // fields
     std::map<SectionID, ByteArray> m_sections;
@@ -170,22 +194,14 @@ inline void Compiler::Impl::gen(const Imm &imm)
     }
 }
 
-template <class T>
-bool Compiler::Impl::isByte(T value)
-{
-    return value >= -128 && value <= 127;
-}
-
-template <class T>
-bool Compiler::Impl::isDword(T value)
-{
-    return static_cast<int64_t>(value) >= INT32_MIN &&
-           static_cast<int64_t>(value) <= INT32_MAX;
-}
-
 bool detail::RegRef::operator==(const detail::RegRef &ref) const
 {
     return size == ref.size && reg == ref.reg;
+}
+
+bool detail::RegRef::operator!=(const detail::RegRef &ref) const
+{
+    return !(*this == ref);
 }
 
 Compiler::MemRef::MemRef(int8_t scale, const RegRef &index, const RegRef &base)
@@ -519,19 +535,19 @@ void Compiler::movq(uint64_t imm, const Ref &dst)
 
 Compiler::Impl::Imm::Imm(uint8_t value)
     : size{Size::Byte}
-    , byte{value}
+    , qword{value}
 {
 }
 
 Compiler::Impl::Imm::Imm(uint16_t value)
     : size{Size::Word}
-    , word{value}
+    , qword{value}
 {
 }
 
 Compiler::Impl::Imm::Imm(uint32_t value)
     : size{Size::Dword}
-    , dword{value}
+    , qword{value}
 {
 }
 
@@ -639,25 +655,24 @@ void Compiler::Impl::constant(double value)
 
 void Compiler::Impl::mov(const Ref &src, const Ref &dst)
 {
-    if (src.type == Ref::Type::Reg)
+    // if (src.type == Ref::Type::Reg && src.reg.reg == 0 &&
+    //     dst.type == Ref::Type::Mem && dst.mem.base == NOREG &&
+    //     dst.mem.index == NOREG)
+    // {
+    //     instr(0xa0, MemRef(0, NOREG, NOREG), src);
+    //     gen(static_cast<uint64_t>(dst.mem.disp));
+    // }
+    // else if (
+    //     dst.type == Ref::Type::Reg && dst.reg.reg == 0 &&
+    //     src.type == Ref::Type::Mem && src.mem.base == NOREG &&
+    //     src.mem.index == NOREG)
+    // {
+    //     instr(0xa0, MemRef(0, NOREG, NOREG), dst);
+    //     gen(static_cast<uint64_t>(src.mem.disp));
+    // }
+    // else
     {
         instr(0x88, src, dst);
-    }
-    else
-    {
-        if ((src.type == Ref::Type::Reg && src.reg.reg == 0 &&
-             dst.type == Ref::Type::Mem && dst.mem.base == NOREG &&
-             dst.mem.index == NOREG) ||
-            (dst.type == Ref::Type::Reg && dst.reg.reg == 0 &&
-             src.type == Ref::Type::Mem && src.mem.base == NOREG &&
-             src.mem.index == NOREG))
-        {
-            instr(0xa0, src, dst);
-        }
-        else
-        {
-            instr(0x89, src, dst);
-        }
     }
 }
 
@@ -693,7 +708,7 @@ void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
         {
             if (dst.reg.size == Size::Qword && isDword(imm.qword))
             {
-                instr(0xc6, 0, Imm(static_cast<uint32_t>(imm.dword)), dst.reg);
+                instr(0xc6, 0, imm, dst.reg);
             }
             else
             {
@@ -722,12 +737,19 @@ void Compiler::Impl::instr(uint8_t opcode, const Ref &op1, const Ref &op2)
         opcode += c_opcode_field_w;
     }
 
+    if (rm_ref.type == Ref::Type::Mem &&
+        ((rm_ref.mem.base != NOREG && rm_ref.mem.base.size != Size::Qword) ||
+         (rm_ref.mem.index != NOREG && rm_ref.mem.index.size != Size::Qword)))
+    {
+        gen(uint8_t{0x67});
+    }
+
     genREXPreffix(
         reg_ref,
         (rm_ref.type == Ref::Type::Mem && rm_ref.mem.scale != 0)
             ? rm_ref.mem.index
             : NOREG,
-        rm_ref.type == Ref::Type::Reg ? rm_ref.reg : NOREG);
+        rm_ref.type == Ref::Type::Reg ? rm_ref.reg : rm_ref.mem.base);
 
     gen(opcode);
 
@@ -757,8 +779,28 @@ void Compiler::Impl::instr(
     const Imm &imm,
     const Ref &op1)
 {
-    instr(opcode, RegRef(static_cast<detail::DwordReg>(ext)), op1);
-    gen(imm);
+    RegRef reg_ref;
+    if (imm.size == Size::Byte)
+    {
+        reg_ref = RegRef(static_cast<detail::ByteReg>(ext));
+    }
+    else if (imm.size == Size::Qword)
+    {
+        reg_ref = RegRef(static_cast<detail::QwordReg>(ext));
+    }
+    else
+    {
+        reg_ref = RegRef(static_cast<detail::DwordReg>(ext));
+    }
+    instr(opcode, reg_ref, op1);
+    if (imm.size == Size::Qword)
+    {
+        gen(Imm(imm.dword));
+    }
+    else
+    {
+        gen(imm);
+    }
 }
 
 void Compiler::Impl::genREXPreffix(
@@ -768,7 +810,7 @@ void Compiler::Impl::genREXPreffix(
 {
     uint8_t rex = c_rex;
 
-    if (base.size == Size::Qword)
+    if (reg.size == Size::Qword)
     {
         rex += c_rex_field_w;
     }
@@ -799,7 +841,8 @@ void Compiler::Impl::genMemRef(const RegRef &reg_ref, const MemRef &mem_ref)
     int8_t mod;
     int8_t rm = mem_ref.base.reg;
 
-    if (mem_ref.disp == 0)
+    if ((mem_ref.disp == 0 && (mem_ref.base.reg & ~R8.reg) != 5) ||
+        (mem_ref.scale != 0 && mem_ref.base == NOREG))
     {
         mod = 0;
     }
@@ -809,37 +852,71 @@ void Compiler::Impl::genMemRef(const RegRef &reg_ref, const MemRef &mem_ref)
     }
     else
     {
-        mod = 3;
+        mod = 2;
     }
 
     if (mem_ref.base == NOREG && mem_ref.index == NOREG)
     {
         mod = 0;
-        rm = 6;
+        rm = 4;
     }
 
-    composeByte(
-        mod, reg_ref.reg & ~R8.reg, mem_ref.scale != 0 ? 5 : rm & ~R8.reg);
-
-    if (mem_ref.scale != 0 || mem_ref.base.reg == 5)
+    if (mem_ref.scale != 0)
     {
-        genSIBByte(mem_ref);
+        rm = 4;
     }
 
-    if (mem_ref.disp != 0)
+    composeByte(mod, reg_ref.reg & ~R8.reg, rm & ~R8.reg);
+
+    if (mem_ref.base == NOREG && mem_ref.index == NOREG)
     {
-        gen(isByte(mem_ref.disp) ? static_cast<int8_t>(mem_ref.disp)
-                                 : mem_ref.disp);
+        genSIBByte(MemRef(
+            0,
+            static_cast<detail::QwordReg>(4),
+            static_cast<detail::QwordReg>(5)));
+    }
+    else if (mem_ref.scale != 0)
+    {
+        if (mem_ref.index.reg == 4)
+        {
+            throw std::runtime_error("cannot index by %esp in SIB");
+        }
+
+        if (mem_ref.base == NOREG)
+        {
+            genSIBByte(MemRef(
+                mem_ref.scale,
+                mem_ref.index,
+                static_cast<detail::QwordReg>(5)));
+        }
+        else
+        {
+            genSIBByte(mem_ref);
+        }
+    }
+    else if ((mem_ref.base.reg & ~R8.reg) == 4)
+    {
+        genSIBByte(MemRef(
+            0,
+            static_cast<detail::QwordReg>(4),
+            static_cast<detail::QwordReg>(4)));
+    }
+
+    if (mem_ref.disp != 0 || (mem_ref.base.reg & ~R8.reg) == 5)
+    {
+        if (isByte(mem_ref.disp) && mem_ref.base != NOREG)
+        {
+            gen(static_cast<int8_t>(mem_ref.disp));
+        }
+        else
+        {
+            gen(mem_ref.disp);
+        }
     }
 }
 
 void Compiler::Impl::genSIBByte(const MemRef &mem_ref)
 {
-    // if (mem_ref.index.reg == 5)
-    // {
-    //     throw std::runtime_error("cannot index by %esp in SIB");
-    // }
-
     composeByte(
         static_cast<int8_t>(log2(mem_ref.scale)),
         mem_ref.index.reg & ~R8.reg,

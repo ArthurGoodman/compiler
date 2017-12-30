@@ -111,6 +111,7 @@ public: // methods
     }
 
     bool operator==(const RegRef &ref) const;
+    bool operator!=(const RegRef &ref) const;
 
 public: // fields
     Size size;
