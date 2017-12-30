@@ -176,20 +176,20 @@ public: // types
     public: // methods
         MemRef(int8_t scale, const RegRef &index, const RegRef &base);
 
-        MemRef operator+(int32_t offset) const;
-        MemRef operator-(int32_t offset) const;
+        MemRef operator+(int64_t offset) const;
+        MemRef operator-(int64_t offset) const;
 
     private: // methods
-        MemRef(const MemRef &ref, int32_t disp);
+        MemRef(const MemRef &ref, int64_t disp);
 
     public: // fields
         int8_t scale;
         RegRef index;
         RegRef base;
-        int32_t disp;
+        int64_t disp;
     };
 
-    friend MemRef operator+(int32_t offset, const MemRef &ref);
+    friend MemRef operator+(int64_t offset, const MemRef &ref);
 
     struct SymRef
     {
@@ -210,19 +210,19 @@ public: // types
 
         ~SymRef();
 
-        SymRef operator+(int32_t offset) const;
-        SymRef operator-(int32_t offset) const;
+        SymRef operator+(int64_t offset) const;
+        SymRef operator-(int64_t offset) const;
 
     private: // methods
-        SymRef(const SymRef &ref, int32_t offset);
+        SymRef(const SymRef &ref, int64_t offset);
 
     public: // fields
         Type type;
         const char *name;
-        int32_t offset;
+        int64_t offset;
     };
 
-    friend SymRef operator+(int32_t offset, const SymRef &ref);
+    friend SymRef operator+(int64_t offset, const SymRef &ref);
 
     struct Ref
     {
@@ -246,7 +246,7 @@ public: // types
 
         ~Ref();
 
-        Ref operator+(int32_t offset) const;
+        Ref operator+(int64_t offset) const;
 
     public: // fields
         Type type;
@@ -259,7 +259,7 @@ public: // types
         };
     };
 
-    friend Ref operator+(int32_t offset, const Ref &ref);
+    friend Ref operator+(int64_t offset, const Ref &ref);
 
 public: // methods
     Compiler();
@@ -283,7 +283,7 @@ public: // methods
 
     RegRef reg(const RegRef &reg) const;
 
-    MemRef mem(int32_t disp) const;
+    MemRef mem(int64_t disp) const;
     MemRef mem(const RegRef &reg) const;
     MemRef mem(const RegRef &index, int8_t scale) const;
     MemRef mem(const RegRef &base, const RegRef &index, int8_t scale) const;
@@ -294,6 +294,7 @@ public: // methods
     void constant(uint8_t value);
     void constant(uint16_t value);
     void constant(uint32_t value);
+    void constant(uint64_t value);
     void constant(double value);
 
     void mov(const Ref &src, const Ref &dst);

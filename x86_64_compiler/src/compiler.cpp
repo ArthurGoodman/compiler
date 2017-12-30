@@ -1,6 +1,5 @@
 #include "x86_64_compiler/compiler.hpp"
 #include <cmath>
-#include <iostream>
 #include <limits>
 #include <map>
 
@@ -83,7 +82,7 @@ public: // methods
 
     RegRef reg(const RegRef &reg) const;
 
-    MemRef mem(int32_t disp) const;
+    MemRef mem(int64_t disp) const;
     MemRef mem(const RegRef &reg) const;
     MemRef mem(const RegRef &index, int8_t scale) const;
     MemRef mem(const RegRef &base, const RegRef &index, int8_t scale) const;
@@ -94,6 +93,7 @@ public: // methods
     void constant(uint8_t value);
     void constant(uint16_t value);
     void constant(uint32_t value);
+    void constant(uint64_t value);
     void constant(double value);
 
     void mov(const Ref &src, const Ref &dst);
@@ -144,30 +144,28 @@ public:
     typename std::enable_if<std::is_signed<T>::value, bool>::type isByte(
         T value)
     {
-        return static_cast<int64_t>(value) >= INT8_MIN &&
-               static_cast<int64_t>(value) <= INT8_MAX;
+        return value >= INT8_MIN && value <= INT8_MAX;
     }
 
     template <class T>
     typename std::enable_if<!std::is_signed<T>::value, bool>::type isByte(
         T value)
     {
-        return static_cast<uint64_t>(value) <= UINT8_MAX;
+        return value <= INT8_MAX;
     }
 
     template <class T>
     typename std::enable_if<std::is_signed<T>::value, bool>::type isDword(
         T value)
     {
-        return static_cast<int64_t>(value) >= INT32_MIN &&
-               static_cast<int64_t>(value) <= INT32_MAX;
+        return value >= INT32_MIN && value <= INT32_MAX;
     }
 
     template <class T>
     typename std::enable_if<!std::is_signed<T>::value, bool>::type isDword(
         T value)
     {
-        return static_cast<uint64_t>(value) <= UINT32_MAX;
+        return value <= INT32_MAX;
     }
 
 private: // fields
@@ -225,12 +223,12 @@ Compiler::MemRef::MemRef(int8_t scale, const RegRef &index, const RegRef &base)
 {
 }
 
-Compiler::MemRef Compiler::MemRef::operator-(int32_t offset) const
+Compiler::MemRef Compiler::MemRef::operator-(int64_t offset) const
 {
     return MemRef(*this, disp - offset);
 }
 
-Compiler::MemRef::MemRef(const MemRef &ref, int32_t disp)
+Compiler::MemRef::MemRef(const MemRef &ref, int64_t disp)
     : scale{ref.scale}
     , index{ref.index}
     , base{ref.base}
@@ -238,12 +236,12 @@ Compiler::MemRef::MemRef(const MemRef &ref, int32_t disp)
 {
 }
 
-Compiler::MemRef Compiler::MemRef::operator+(int32_t offset) const
+Compiler::MemRef Compiler::MemRef::operator+(int64_t offset) const
 {
     return MemRef(*this, disp + offset);
 }
 
-Compiler::MemRef operator+(int32_t offset, const Compiler::MemRef &ref)
+Compiler::MemRef operator+(int64_t offset, const Compiler::MemRef &ref)
 {
     return ref + offset;
 }
@@ -296,24 +294,24 @@ Compiler::SymRef::~SymRef()
     delete name;
 }
 
-Compiler::SymRef Compiler::SymRef::operator+(int32_t offset) const
+Compiler::SymRef Compiler::SymRef::operator+(int64_t offset) const
 {
     return SymRef(*this, this->offset + offset);
 }
 
-Compiler::SymRef Compiler::SymRef::operator-(int32_t offset) const
+Compiler::SymRef Compiler::SymRef::operator-(int64_t offset) const
 {
     return SymRef(*this, this->offset - offset);
 }
 
-Compiler::SymRef::SymRef(const SymRef &ref, int32_t offset)
+Compiler::SymRef::SymRef(const SymRef &ref, int64_t offset)
     : type{ref.type}
     , name{strdup(ref.name)}
     , offset{offset}
 {
 }
 
-Compiler::SymRef operator+(int32_t offset, const Compiler::SymRef &ref)
+Compiler::SymRef operator+(int64_t offset, const Compiler::SymRef &ref)
 {
     return ref + offset;
 }
@@ -398,7 +396,7 @@ Compiler::Ref::~Ref()
     }
 }
 
-Compiler::Ref Compiler::Ref::operator+(int32_t offset) const
+Compiler::Ref Compiler::Ref::operator+(int64_t offset) const
 {
     Ref ref = *this;
 
@@ -418,7 +416,7 @@ Compiler::Ref Compiler::Ref::operator+(int32_t offset) const
     return ref;
 }
 
-Compiler::Ref operator+(int32_t offset, const Compiler::Ref &ref)
+Compiler::Ref operator+(int64_t offset, const Compiler::Ref &ref)
 {
     return ref + offset;
 }
@@ -468,7 +466,7 @@ Compiler::RegRef Compiler::reg(const RegRef &reg) const
     return m_impl->reg(reg);
 }
 
-Compiler::MemRef Compiler::mem(int32_t disp) const
+Compiler::MemRef Compiler::mem(int64_t disp) const
 {
     return m_impl->mem(disp);
 }
@@ -512,6 +510,11 @@ void Compiler::constant(uint16_t value)
 }
 
 void Compiler::constant(uint32_t value)
+{
+    return m_impl->constant(value);
+}
+
+void Compiler::constant(uint64_t value)
 {
     return m_impl->constant(value);
 }
@@ -613,7 +616,7 @@ Compiler::RegRef Compiler::Impl::reg(const RegRef &reg) const
     return reg;
 }
 
-Compiler::MemRef Compiler::Impl::mem(int32_t disp) const
+Compiler::MemRef Compiler::Impl::mem(int64_t disp) const
 {
     return disp + MemRef(0, NOREG, NOREG);
 }
@@ -661,6 +664,11 @@ void Compiler::Impl::constant(uint32_t value)
     gen(value);
 }
 
+void Compiler::Impl::constant(uint64_t value)
+{
+    gen(value);
+}
+
 void Compiler::Impl::constant(double value)
 {
     gen(value);
@@ -668,22 +676,24 @@ void Compiler::Impl::constant(double value)
 
 void Compiler::Impl::mov(const Ref &src, const Ref &dst)
 {
-    // if (src.type == Ref::Type::Reg && src.reg.reg == 0 &&
-    //     dst.type == Ref::Type::Mem && dst.mem.base == NOREG &&
-    //     dst.mem.index == NOREG)
-    // {
-    //     instr(0xa0, MemRef(0, NOREG, NOREG), src);
-    //     gen(static_cast<uint64_t>(dst.mem.disp));
-    // }
-    // else if (
-    //     dst.type == Ref::Type::Reg && dst.reg.reg == 0 &&
-    //     src.type == Ref::Type::Mem && src.mem.base == NOREG &&
-    //     src.mem.index == NOREG)
-    // {
-    //     instr(0xa0, MemRef(0, NOREG, NOREG), dst);
-    //     gen(static_cast<uint64_t>(src.mem.disp));
-    // }
-    // else
+    if (src.type == Ref::Type::Reg && src.reg.reg == 0 &&
+        dst.type == Ref::Type::Mem && dst.mem.base == NOREG &&
+        dst.mem.index == NOREG && !isDword(dst.mem.disp))
+    {
+        genREXPreffix(-1, src.reg.size, -1, -1);
+        gen(static_cast<uint8_t>(0xa3));
+        gen(dst.mem.disp);
+    }
+    else if (
+        dst.type == Ref::Type::Reg && dst.reg.reg == 0 &&
+        src.type == Ref::Type::Mem && src.mem.base == NOREG &&
+        src.mem.index == NOREG && !isDword(src.mem.disp))
+    {
+        genREXPreffix(-1, dst.reg.size, -1, -1);
+        gen(static_cast<uint8_t>(0xa1));
+        gen(src.mem.disp);
+    }
+    else
     {
         instr(0x88, src, dst);
     }
@@ -851,7 +861,6 @@ void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
     }
 
     genCompositeByte(mod, reg & c_x86_mask, rm);
-
     genSIB(mem_ref);
 
     if (mem_ref.disp || (mem_ref.base.reg & c_x86_mask) == 5)
@@ -862,7 +871,7 @@ void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
         }
         else
         {
-            gen(mem_ref.disp);
+            gen(static_cast<int32_t>(mem_ref.disp));
         }
     }
 }
