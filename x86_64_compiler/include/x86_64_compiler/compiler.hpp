@@ -303,6 +303,8 @@ public: // methods
     void movl(uint32_t imm, const Ref &dst);
     void movq(uint64_t imm, const Ref &dst);
 
+    void nop();
+
 private: // types
     class Impl;
 

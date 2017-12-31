@@ -102,6 +102,8 @@ public: // methods
     void movl(uint32_t imm, const Ref &dst);
     void movq(uint64_t imm, const Ref &dst);
 
+    void nop();
+
 private: // methods
     void mov(const Imm &imm, const Ref &dst);
 
@@ -121,10 +123,15 @@ private: // methods
     void genRef(int8_t reg, const MemRef &mem_ref);
     void genSIB(const MemRef &mem_ref);
 
-    void genCompositeByte(int8_t a, int8_t b, int8_t c);
+    void genCompositeByte(uint8_t a, uint8_t b, uint8_t c);
 
     template <class T>
     void gen(const T &value);
+
+    void genb(uint8_t);
+    void genw(uint16_t);
+    void genl(uint32_t);
+    void genq(uint64_t);
 
     const ByteArray &section(SectionID id) const;
     ByteArray &section(SectionID id);
@@ -549,6 +556,11 @@ void Compiler::movq(uint64_t imm, const Ref &dst)
     return m_impl->movq(imm, dst);
 }
 
+void Compiler::nop()
+{
+    m_impl->nop();
+}
+
 Compiler::Impl::Imm::Imm(uint8_t value)
     : size{Size::Byte}
     , qword{value}
@@ -681,7 +693,7 @@ void Compiler::Impl::mov(const Ref &src, const Ref &dst)
         dst.mem.index == NOREG && !isDword(dst.mem.disp))
     {
         genREXPreffix(-1, src.reg.size, -1, -1);
-        gen(static_cast<uint8_t>(0xa3));
+        genb(0xa3);
         gen(dst.mem.disp);
     }
     else if (
@@ -690,7 +702,7 @@ void Compiler::Impl::mov(const Ref &src, const Ref &dst)
         src.mem.index == NOREG && !isDword(src.mem.disp))
     {
         genREXPreffix(-1, dst.reg.size, -1, -1);
-        gen(static_cast<uint8_t>(0xa1));
+        genb(0xa1);
         gen(src.mem.disp);
     }
     else
@@ -717,6 +729,11 @@ void Compiler::Impl::movl(uint32_t imm, const Ref &dst)
 void Compiler::Impl::movq(uint64_t imm, const Ref &dst)
 {
     mov(imm, dst);
+}
+
+void Compiler::Impl::nop()
+{
+    genb(0x90);
 }
 
 void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
@@ -775,7 +792,7 @@ void Compiler::Impl::instr(
 void Compiler::Impl::instr(uint8_t opcode, const Imm &imm, int8_t reg)
 {
     genREXPreffix(-1, Size::None, -1, reg);
-    gen(static_cast<uint8_t>(opcode + (reg & c_x86_mask)));
+    genb(opcode + (reg & c_x86_mask));
     gen(imm);
 }
 
@@ -810,7 +827,7 @@ void Compiler::Impl::genREXPreffix(
 
     if (rex)
     {
-        gen(static_cast<uint8_t>(c_rex + rex));
+        genb(c_rex + rex);
     }
 }
 
@@ -833,8 +850,8 @@ void Compiler::Impl::genRef(int8_t reg, const RegRef &reg_ref)
 
 void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
 {
-    int8_t mod;
-    int8_t rm = mem_ref.base.reg & c_x86_mask;
+    uint8_t mod;
+    uint8_t rm = mem_ref.base.reg & c_x86_mask;
 
     if ((mem_ref.disp == 0 && (mem_ref.base.reg & c_x86_mask) != 5) ||
         (mem_ref.scale && mem_ref.base == NOREG))
@@ -867,11 +884,11 @@ void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
     {
         if (isByte(mem_ref.disp) && mem_ref.base != NOREG)
         {
-            gen(static_cast<int8_t>(mem_ref.disp));
+            gen(static_cast<uint8_t>(mem_ref.disp));
         }
         else
         {
-            gen(static_cast<int32_t>(mem_ref.disp));
+            gen(static_cast<uint32_t>(mem_ref.disp));
         }
     }
 }
@@ -879,8 +896,8 @@ void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
 void Compiler::Impl::genSIB(const MemRef &mem_ref)
 {
     int8_t scale = -1;
-    int8_t index = mem_ref.index.reg & c_x86_mask;
-    int8_t base = mem_ref.base.reg & c_x86_mask;
+    uint8_t index = mem_ref.index.reg & c_x86_mask;
+    uint8_t base = mem_ref.base.reg & c_x86_mask;
 
     if (mem_ref.scale)
     {
@@ -910,13 +927,33 @@ void Compiler::Impl::genSIB(const MemRef &mem_ref)
 
     if (scale >= 0)
     {
-        genCompositeByte(static_cast<int8_t>(log2(scale)), index, base);
+        genCompositeByte(static_cast<uint8_t>(log2(scale)), index, base);
     }
 }
 
-void Compiler::Impl::genCompositeByte(int8_t a, int8_t b, int8_t c)
+void Compiler::Impl::genCompositeByte(uint8_t a, uint8_t b, uint8_t c)
 {
-    gen(static_cast<int8_t>((a << 6) + (b << 3) + c));
+    gen(static_cast<uint8_t>((a << 6) + (b << 3) + c));
+}
+
+void Compiler::Impl::genb(uint8_t value)
+{
+    gen(value);
+}
+
+void Compiler::Impl::genw(uint16_t value)
+{
+    gen(value);
+}
+
+void Compiler::Impl::genl(uint32_t value)
+{
+    gen(value);
+}
+
+void Compiler::Impl::genq(uint64_t value)
+{
+    gen(value);
 }
 
 const ByteArray &Compiler::Impl::section(SectionID id) const
