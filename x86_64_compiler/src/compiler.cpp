@@ -12,7 +12,8 @@ constexpr uint8_t c_mod_reg = 3;
 
 constexpr uint8_t c_x86_mask = 7;
 
-constexpr uint8_t c_address_size_preffix = 0x67;
+constexpr uint8_t c_operand_size_override_prefix = 0x66;
+constexpr uint8_t c_address_size_override_prefix = 0x67;
 
 constexpr uint8_t c_opcode_field_w = 1 << 0;
 constexpr uint8_t c_opcode_field_d = 1 << 1;
@@ -112,7 +113,7 @@ private: // methods
     void instr(uint8_t opcode, const Imm &imm, int8_t reg);
     void instr(uint8_t opcode, int8_t ext, const Imm &imm, const Ref &dst);
 
-    void genREXPreffix(
+    void genREXPrefix(
         const int8_t &reg,
         Size size,
         const int8_t &index,
@@ -688,22 +689,14 @@ void Compiler::Impl::constant(double value)
 
 void Compiler::Impl::mov(const Ref &src, const Ref &dst)
 {
-    if (src.type == Ref::Type::Reg && src.reg.reg == 0 &&
-        dst.type == Ref::Type::Mem && dst.mem.base == NOREG &&
-        dst.mem.index == NOREG && !isDword(dst.mem.disp))
+    if ((src.type == Ref::Type::Reg && src.reg.reg == 0 &&
+         dst.type == Ref::Type::Mem && dst.mem.base == NOREG &&
+         dst.mem.index == NOREG && !isDword(dst.mem.disp)) ||
+        (dst.type == Ref::Type::Reg && dst.reg.reg == 0 &&
+         src.type == Ref::Type::Mem && src.mem.base == NOREG &&
+         src.mem.index == NOREG && !isDword(src.mem.disp)))
     {
-        genREXPreffix(-1, src.reg.size, -1, -1);
-        genb(0xa3);
-        gen(dst.mem.disp);
-    }
-    else if (
-        dst.type == Ref::Type::Reg && dst.reg.reg == 0 &&
-        src.type == Ref::Type::Mem && src.mem.base == NOREG &&
-        src.mem.index == NOREG && !isDword(src.mem.disp))
-    {
-        genREXPreffix(-1, dst.reg.size, -1, -1);
-        genb(0xa1);
-        gen(src.mem.disp);
+        instr(0xa0, dst, src);
     }
     else
     {
@@ -777,21 +770,31 @@ void Compiler::Impl::instr(
         ((rm_ref.mem.base != NOREG && rm_ref.mem.base.size != Size::Qword) ||
          (rm_ref.mem.index != NOREG && rm_ref.mem.index.size != Size::Qword)))
     {
-        gen(c_address_size_preffix);
+        gen(c_address_size_override_prefix);
+    }
+
+    if (size == Size::Word)
+    {
+        gen(c_operand_size_override_prefix);
     }
 
     int8_t index = rm_ref.type == Ref::Type::Mem ? rm_ref.mem.index.reg : -1;
     int8_t base =
         rm_ref.type == Ref::Type::Mem ? rm_ref.mem.base.reg : rm_ref.reg.reg;
 
-    genREXPreffix(reg, size, index, base);
+    genREXPrefix(reg, size, index, base);
     gen(opcode);
     genRef(reg, rm_ref);
 }
 
 void Compiler::Impl::instr(uint8_t opcode, const Imm &imm, int8_t reg)
 {
-    genREXPreffix(-1, Size::None, -1, reg);
+    if (imm.size == Size::Word)
+    {
+        gen(c_operand_size_override_prefix);
+    }
+
+    genREXPrefix(-1, Size::None, -1, reg);
     genb(opcode + (reg & c_x86_mask));
     gen(imm);
 }
@@ -814,7 +817,7 @@ void Compiler::Impl::instr(
     }
 }
 
-void Compiler::Impl::genREXPreffix(
+void Compiler::Impl::genREXPrefix(
     const int8_t &reg,
     Size size,
     const int8_t &index,
@@ -850,6 +853,12 @@ void Compiler::Impl::genRef(int8_t reg, const RegRef &reg_ref)
 
 void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
 {
+    if (!isDword(mem_ref.disp))
+    {
+        gen(mem_ref.disp);
+        return;
+    }
+
     uint8_t mod;
     uint8_t rm = mem_ref.base.reg & c_x86_mask;
 

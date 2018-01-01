@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gcc -c -o a.out $1
+gcc -c -o a.out $1 || exit 1
 dump=`objdump -D -w`
 rm a.out
 
