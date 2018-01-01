@@ -731,11 +731,6 @@ void Compiler::Impl::movq(uint64_t imm, const Ref &dst)
     mov(imm, dst);
 }
 
-void Compiler::Impl::nop()
-{
-    genb(0x90);
-}
-
 void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
 {
     if (dst.type == Ref::Type::Mem ||
@@ -747,6 +742,11 @@ void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
     {
         instr(dst.reg.size == Size::Byte ? 0xb0 : 0xb8, imm, dst.reg.reg);
     }
+}
+
+void Compiler::Impl::nop()
+{
+    genb(0x90);
 }
 
 void Compiler::Impl::instr(uint8_t opcode, const Ref &src, const Ref &dst)
