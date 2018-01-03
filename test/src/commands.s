@@ -143,3 +143,14 @@ mov 0xffffffff,%al
 mov 0xffffffff,%ax
 mov 0xffffffff,%eax
 mov 0xffffffff,%rax
+nop
+callw 0
+callw *0x7fffffff
+callw *(%eax)
+call 0
+call *0x7fffffff
+call *(%eax)
+lcallw *0x7fffffff
+lcallw *(%eax)
+lcall *0x7fffffff
+lcall *(%eax)

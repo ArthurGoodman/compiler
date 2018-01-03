@@ -97,6 +97,16 @@ public: // methods
     void constant(uint64_t value);
     void constant(double value);
 
+    void call(int32_t disp);
+    void callw(int16_t disp);
+    void callq(int32_t disp);
+    void call(const Ref &ref);
+    void callw(const Ref &ref);
+    void callq(const Ref &ref);
+    void lcall(const Ref &ref);
+    void lcallw(const Ref &ref);
+    void lcalll(const Ref &ref);
+
     void mov(const Ref &src, const Ref &dst);
     void movb(uint8_t imm, const Ref &dst);
     void movw(uint16_t imm, const Ref &dst);
@@ -532,6 +542,51 @@ void Compiler::constant(double value)
     return m_impl->constant(value);
 }
 
+void Compiler::call(int32_t disp)
+{
+    return m_impl->call(disp);
+}
+
+void Compiler::callw(int16_t disp)
+{
+    return m_impl->callw(disp);
+}
+
+void Compiler::callq(int32_t disp)
+{
+    return m_impl->callq(disp);
+}
+
+void Compiler::call(const Compiler::Ref &ref)
+{
+    return m_impl->call(ref);
+}
+
+void Compiler::callw(const Compiler::Ref &ref)
+{
+    return m_impl->callw(ref);
+}
+
+void Compiler::callq(const Compiler::Ref &ref)
+{
+    return m_impl->callq(ref);
+}
+
+void Compiler::lcall(const Compiler::Ref &ref)
+{
+    return m_impl->lcall(ref);
+}
+
+void Compiler::lcallw(const Compiler::Ref &ref)
+{
+    return m_impl->lcallw(ref);
+}
+
+void Compiler::lcalll(const Compiler::Ref &ref)
+{
+    return m_impl->lcalll(ref);
+}
+
 void Compiler::mov(const Ref &src, const Ref &dst)
 {
     return m_impl->mov(src, dst);
@@ -685,6 +740,57 @@ void Compiler::Impl::constant(uint64_t value)
 void Compiler::Impl::constant(double value)
 {
     gen(value);
+}
+
+void Compiler::Impl::call(int32_t disp)
+{
+    callq(disp);
+}
+
+void Compiler::Impl::callw(int16_t disp)
+{
+    ///@ hack: reg=0
+    instr(0xe8, static_cast<uint16_t>(disp), 0);
+}
+
+void Compiler::Impl::callq(int32_t disp)
+{
+    ///@ hack: reg=0
+    instr(0xe8, static_cast<uint32_t>(disp), 0);
+}
+
+void Compiler::Impl::call(const Ref &ref)
+{
+    callq(ref);
+}
+
+void Compiler::Impl::callw(const Ref &ref)
+{
+    ///@ hack: opcode=0xff-1
+    instr(0xfe, 2, Size::Word, ref);
+}
+
+void Compiler::Impl::callq(const Ref &ref)
+{
+    ///@ hack: opcode=0xff-1
+    instr(0xfe, 2, Size::Dword, ref);
+}
+
+void Compiler::Impl::lcall(const Ref &ref)
+{
+    lcalll(ref);
+}
+
+void Compiler::Impl::lcallw(const Ref &ref)
+{
+    ///@ hack: opcode=0xff-1
+    instr(0xfe, 3, Size::Word, ref);
+}
+
+void Compiler::Impl::lcalll(const Ref &ref)
+{
+    ///@ hack: opcode=0xff-1
+    instr(0xfe, 3, Size::Dword, ref);
 }
 
 void Compiler::Impl::mov(const Ref &src, const Ref &dst)

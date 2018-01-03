@@ -297,6 +297,16 @@ public: // methods
     void constant(uint64_t value);
     void constant(double value);
 
+    void call(int32_t disp);
+    void callw(int16_t disp);
+    void callq(int32_t disp);
+    void call(const Ref &ref);
+    void callw(const Ref &ref);
+    void callq(const Ref &ref);
+    void lcall(const Ref &ref);
+    void lcallw(const Ref &ref);
+    void lcalll(const Ref &ref);
+
     void mov(const Ref &src, const Ref &dst);
     void movb(uint8_t imm, const Ref &dst);
     void movw(uint16_t imm, const Ref &dst);
