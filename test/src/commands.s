@@ -154,3 +154,8 @@ lcallw *0x7fffffff
 lcallw *(%eax)
 lcall *0x7fffffff
 lcall *(%eax)
+nop
+enterw $0xeeee, $0xff
+enter $0xeeee, $0xff
+leavew
+leave

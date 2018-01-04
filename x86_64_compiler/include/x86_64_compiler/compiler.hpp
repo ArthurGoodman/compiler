@@ -307,6 +307,13 @@ public: // methods
     void lcallw(const Ref &ref);
     void lcalll(const Ref &ref);
 
+    void enter(uint16_t imm16, uint8_t imm8);
+    void enterw(uint16_t imm16, uint8_t imm8);
+    void enterq(uint16_t imm16, uint8_t imm8);
+    void leave();
+    void leavew();
+    void leaveq();
+
     void mov(const Ref &src, const Ref &dst);
     void movb(uint8_t imm, const Ref &dst);
     void movw(uint16_t imm, const Ref &dst);

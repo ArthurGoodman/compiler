@@ -107,6 +107,13 @@ public: // methods
     void lcallw(const Ref &ref);
     void lcalll(const Ref &ref);
 
+    void enter(uint16_t imm16, uint8_t imm8);
+    void enterw(uint16_t imm16, uint8_t imm8);
+    void enterq(uint16_t imm16, uint8_t imm8);
+    void leave();
+    void leavew();
+    void leaveq();
+
     void mov(const Ref &src, const Ref &dst);
     void movb(uint8_t imm, const Ref &dst);
     void movw(uint16_t imm, const Ref &dst);
@@ -450,7 +457,7 @@ Compiler::~Compiler()
 
 void Compiler::reset()
 {
-    m_impl->reset();
+    return m_impl->reset();
 }
 
 void Compiler::rdata(
@@ -458,7 +465,7 @@ void Compiler::rdata(
     const uint8_t *data,
     std::size_t size)
 {
-    m_impl->rdata(name, data, size);
+    return m_impl->rdata(name, data, size);
 }
 
 void Compiler::data(
@@ -466,12 +473,12 @@ void Compiler::data(
     const uint8_t *data,
     std::size_t size)
 {
-    m_impl->data(name, data, size);
+    return m_impl->data(name, data, size);
 }
 
 void Compiler::bss(const std::string &name, std::size_t size)
 {
-    m_impl->bss(name, size);
+    return m_impl->bss(name, size);
 }
 
 const ByteArray &Compiler::getCode() const
@@ -587,6 +594,36 @@ void Compiler::lcalll(const Compiler::Ref &ref)
     return m_impl->lcalll(ref);
 }
 
+void Compiler::enter(uint16_t imm16, uint8_t imm8)
+{
+    return m_impl->enter(imm16, imm8);
+}
+
+void Compiler::enterw(uint16_t imm16, uint8_t imm8)
+{
+    return m_impl->enterw(imm16, imm8);
+}
+
+void Compiler::enterq(uint16_t imm16, uint8_t imm8)
+{
+    return m_impl->enterw(imm16, imm8);
+}
+
+void Compiler::leave()
+{
+    return m_impl->leave();
+}
+
+void Compiler::leavew()
+{
+    return m_impl->leavew();
+}
+
+void Compiler::leaveq()
+{
+    return m_impl->leaveq();
+}
+
 void Compiler::mov(const Ref &src, const Ref &dst)
 {
     return m_impl->mov(src, dst);
@@ -614,7 +651,7 @@ void Compiler::movq(uint64_t imm, const Ref &dst)
 
 void Compiler::nop()
 {
-    m_impl->nop();
+    return m_impl->nop();
 }
 
 Compiler::Impl::Imm::Imm(uint8_t value)
@@ -791,6 +828,40 @@ void Compiler::Impl::lcalll(const Ref &ref)
 {
     ///@ hack: opcode=0xff-1
     instr(0xfe, 3, Size::Dword, ref);
+}
+
+void Compiler::Impl::enter(uint16_t imm16, uint8_t imm8)
+{
+    enterq(imm16, imm8);
+}
+
+void Compiler::Impl::enterw(uint16_t imm16, uint8_t imm8)
+{
+    genb(c_operand_size_override_prefix);
+    enterq(imm16, imm8);
+}
+
+void Compiler::Impl::enterq(uint16_t imm16, uint8_t imm8)
+{
+    genb(0xc8);
+    gen(imm16);
+    gen(imm8);
+}
+
+void Compiler::Impl::leave()
+{
+    leaveq();
+}
+
+void Compiler::Impl::leavew()
+{
+    genb(c_operand_size_override_prefix);
+    leaveq();
+}
+
+void Compiler::Impl::leaveq()
+{
+    genb(0xc9);
 }
 
 void Compiler::Impl::mov(const Ref &src, const Ref &dst)
