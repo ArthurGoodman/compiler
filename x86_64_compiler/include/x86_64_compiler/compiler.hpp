@@ -297,6 +297,12 @@ public: // methods
     void constant(uint64_t value);
     void constant(double value);
 
+    void add(const Ref &src, const Ref &dst);
+    void addb(uint8_t imm, const Ref &dst);
+    void addw(uint16_t imm, const Ref &dst);
+    void addl(uint32_t imm, const Ref &dst);
+    void addq(uint64_t imm, const Ref &dst);
+
     void call(int32_t disp);
     void callw(int16_t disp);
     void callq(int32_t disp);
@@ -324,6 +330,12 @@ public: // methods
     void movq(uint64_t imm, const Ref &dst);
 
     void nop();
+
+    void sub(const Ref &src, const Ref &dst);
+    void subb(uint8_t imm, const Ref &dst);
+    void subw(uint16_t imm, const Ref &dst);
+    void subl(uint32_t imm, const Ref &dst);
+    void subq(uint64_t imm, const Ref &dst);
 
 private: // types
     class Impl;

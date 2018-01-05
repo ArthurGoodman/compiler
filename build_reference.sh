@@ -6,6 +6,6 @@ rm a.out
 
 echo "$dump" | while read line
 do
-    regex="^.*: ([0-9a-f ]*) (.*)$"
-    [[ `echo $line` =~ $regex ]] && echo "${BASH_REMATCH[2]} ~ ${BASH_REMATCH[1]}"
+    regex="^.*:(( [0-9a-f]{2})+) (.*)$"
+    [[ `echo $line` =~ $regex ]] && echo "${BASH_REMATCH[3]} ~${BASH_REMATCH[1]}"
 done

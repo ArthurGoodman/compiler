@@ -97,6 +97,12 @@ public: // methods
     void constant(uint64_t value);
     void constant(double value);
 
+    void add(const Ref &src, const Ref &dst);
+    void addb(uint8_t imm, const Ref &dst);
+    void addw(uint16_t imm, const Ref &dst);
+    void addl(uint32_t imm, const Ref &dst);
+    void addq(uint64_t imm, const Ref &dst);
+
     void call(int32_t disp);
     void callw(int16_t disp);
     void callq(int32_t disp);
@@ -125,8 +131,16 @@ public: // methods
 
     void nop();
 
+    void sub(const Ref &src, const Ref &dst);
+    void subb(uint8_t imm, const Ref &dst);
+    void subw(uint16_t imm, const Ref &dst);
+    void subl(uint32_t imm, const Ref &dst);
+    void subq(uint64_t imm, const Ref &dst);
+
 private: // methods
+    void add(const Imm &imm, const Ref &dst);
     void mov(const Imm &imm, const Ref &dst);
+    void sub(const Imm &imm, const Ref &dst);
 
     void instr(uint8_t opcode, const Ref &op1, const Ref &dst);
     void instr(uint8_t opcode, int8_t reg, Size size, const Ref &rm_ref);
@@ -553,6 +567,31 @@ void Compiler::constant(double value)
     return m_impl->constant(value);
 }
 
+void Compiler::add(const Ref &src, const Ref &dst)
+{
+    return m_impl->add(src, dst);
+}
+
+void Compiler::addb(uint8_t imm, const Ref &dst)
+{
+    return m_impl->addb(imm, dst);
+}
+
+void Compiler::addw(uint16_t imm, const Ref &dst)
+{
+    return m_impl->addw(imm, dst);
+}
+
+void Compiler::addl(uint32_t imm, const Ref &dst)
+{
+    return m_impl->addl(imm, dst);
+}
+
+void Compiler::addq(uint64_t imm, const Ref &dst)
+{
+    return m_impl->addq(imm, dst);
+}
+
 void Compiler::call(int32_t disp)
 {
     return m_impl->call(disp);
@@ -661,6 +700,31 @@ void Compiler::movq(uint64_t imm, const Ref &dst)
 void Compiler::nop()
 {
     return m_impl->nop();
+}
+
+void Compiler::sub(const Ref &src, const Ref &dst)
+{
+    return m_impl->sub(src, dst);
+}
+
+void Compiler::subb(uint8_t imm, const Ref &dst)
+{
+    return m_impl->subb(imm, dst);
+}
+
+void Compiler::subw(uint16_t imm, const Ref &dst)
+{
+    return m_impl->subw(imm, dst);
+}
+
+void Compiler::subl(uint32_t imm, const Ref &dst)
+{
+    return m_impl->subl(imm, dst);
+}
+
+void Compiler::subq(uint64_t imm, const Ref &dst)
+{
+    return m_impl->subq(imm, dst);
 }
 
 Compiler::Impl::Imm::Imm(uint8_t value)
@@ -786,6 +850,67 @@ void Compiler::Impl::constant(uint64_t value)
 void Compiler::Impl::constant(double value)
 {
     gen(value);
+}
+
+void Compiler::Impl::add(const Ref &src, const Ref &dst)
+{
+    instr(0x00, src, dst);
+}
+
+void Compiler::Impl::addb(uint8_t imm, const Ref &dst)
+{
+    add(imm, dst);
+}
+
+void Compiler::Impl::addw(uint16_t imm, const Ref &dst)
+{
+    add(imm, dst);
+}
+
+void Compiler::Impl::addl(uint32_t imm, const Ref &dst)
+{
+    add(imm, dst);
+}
+
+void Compiler::Impl::addq(uint64_t imm, const Ref &dst)
+{
+    add(imm, dst);
+}
+
+void Compiler::Impl::add(const Imm &imm, const Ref &dst)
+{
+    if (dst.type == Ref::Type::Reg && dst.reg.reg == 0)
+    {
+        ///@ make instr for this case
+
+        uint8_t opcode = 0x04;
+
+        if (dst.reg.size != Size::Byte)
+        {
+            opcode += c_opcode_field_w;
+        }
+
+        if (imm.size == Size::Word)
+        {
+            gen(c_operand_size_override_prefix);
+        }
+
+        genREXPrefix(-1, dst.reg.size, -1, 0);
+        genb(opcode);
+
+        if (imm.size == Size::Qword)
+        {
+            gen(imm.dword);
+        }
+        else
+        {
+            gen(imm);
+        }
+    }
+    else
+    {
+        instr(0x80, 0, imm, dst);
+    }
 }
 
 void Compiler::Impl::call(int32_t disp)
@@ -928,6 +1053,67 @@ void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
 void Compiler::Impl::nop()
 {
     genb(0x90);
+}
+
+void Compiler::Impl::sub(const Ref &src, const Ref &dst)
+{
+    instr(0x28, src, dst);
+}
+
+void Compiler::Impl::subb(uint8_t imm, const Ref &dst)
+{
+    sub(imm, dst);
+}
+
+void Compiler::Impl::subw(uint16_t imm, const Ref &dst)
+{
+    sub(imm, dst);
+}
+
+void Compiler::Impl::subl(uint32_t imm, const Ref &dst)
+{
+    sub(imm, dst);
+}
+
+void Compiler::Impl::subq(uint64_t imm, const Ref &dst)
+{
+    sub(imm, dst);
+}
+
+void Compiler::Impl::sub(const Imm &imm, const Ref &dst)
+{
+    if (dst.type == Ref::Type::Reg && dst.reg.reg == 0)
+    {
+        ///@ make instr for this case
+
+        uint8_t opcode = 0x2c;
+
+        if (dst.reg.size != Size::Byte)
+        {
+            opcode += c_opcode_field_w;
+        }
+
+        if (imm.size == Size::Word)
+        {
+            gen(c_operand_size_override_prefix);
+        }
+
+        genREXPrefix(-1, dst.reg.size, -1, 0);
+        genb(opcode);
+
+        if (imm.size == Size::Qword)
+        {
+            gen(imm.dword);
+        }
+        else
+        {
+            gen(imm);
+        }
+    }
+    else
+    {
+        instr(0x80, 5, imm, dst);
+    }
 }
 
 void Compiler::Impl::instr(uint8_t opcode, const Ref &src, const Ref &dst)
