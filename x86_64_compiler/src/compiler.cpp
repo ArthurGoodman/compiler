@@ -110,6 +110,9 @@ public: // methods
     void enter(uint16_t imm16, uint8_t imm8);
     void enterw(uint16_t imm16, uint8_t imm8);
     void enterq(uint16_t imm16, uint8_t imm8);
+
+    void lea(const MemRef &mem_ref, const RegRef &reg_ref);
+
     void leave();
     void leavew();
     void leaveq();
@@ -127,6 +130,7 @@ private: // methods
 
     void instr(uint8_t opcode, const Ref &op1, const Ref &dst);
     void instr(uint8_t opcode, int8_t reg, Size size, const Ref &rm_ref);
+    void instr_no_w(uint8_t opcode, int8_t reg, Size size, const Ref &rm_ref);
     void instr(uint8_t opcode, const Imm &imm, int8_t reg);
     void instr(uint8_t opcode, int8_t ext, const Imm &imm, const Ref &dst);
 
@@ -609,6 +613,11 @@ void Compiler::enterq(uint16_t imm16, uint8_t imm8)
     return m_impl->enterw(imm16, imm8);
 }
 
+void Compiler::lea(const MemRef &mem_ref, const RegRef &reg_ref)
+{
+    return m_impl->lea(mem_ref, reg_ref);
+}
+
 void Compiler::leave()
 {
     return m_impl->leave();
@@ -786,14 +795,15 @@ void Compiler::Impl::call(int32_t disp)
 
 void Compiler::Impl::callw(int16_t disp)
 {
-    ///@ hack: reg=0
-    instr(0xe8, static_cast<uint16_t>(disp), 0);
+    gen(c_operand_size_override_prefix);
+    genb(0xe8);
+    gen(disp);
 }
 
 void Compiler::Impl::callq(int32_t disp)
 {
-    ///@ hack: reg=0
-    instr(0xe8, static_cast<uint32_t>(disp), 0);
+    genb(0xe8);
+    gen(disp);
 }
 
 void Compiler::Impl::call(const Ref &ref)
@@ -803,14 +813,12 @@ void Compiler::Impl::call(const Ref &ref)
 
 void Compiler::Impl::callw(const Ref &ref)
 {
-    ///@ hack: opcode=0xff-1
-    instr(0xfe, 2, Size::Word, ref);
+    instr_no_w(0xff, 2, Size::Word, ref);
 }
 
 void Compiler::Impl::callq(const Ref &ref)
 {
-    ///@ hack: opcode=0xff-1
-    instr(0xfe, 2, Size::Dword, ref);
+    instr_no_w(0xff, 2, Size::Dword, ref);
 }
 
 void Compiler::Impl::lcall(const Ref &ref)
@@ -820,14 +828,12 @@ void Compiler::Impl::lcall(const Ref &ref)
 
 void Compiler::Impl::lcallw(const Ref &ref)
 {
-    ///@ hack: opcode=0xff-1
-    instr(0xfe, 3, Size::Word, ref);
+    instr_no_w(0xff, 3, Size::Word, ref);
 }
 
 void Compiler::Impl::lcalll(const Ref &ref)
 {
-    ///@ hack: opcode=0xff-1
-    instr(0xfe, 3, Size::Dword, ref);
+    instr_no_w(0xff, 3, Size::Dword, ref);
 }
 
 void Compiler::Impl::enter(uint16_t imm16, uint8_t imm8)
@@ -846,6 +852,11 @@ void Compiler::Impl::enterq(uint16_t imm16, uint8_t imm8)
     genb(0xc8);
     gen(imm16);
     gen(imm8);
+}
+
+void Compiler::Impl::lea(const MemRef &mem_ref, const RegRef &reg_ref)
+{
+    instr_no_w(0x8d, reg_ref.reg, reg_ref.size, mem_ref);
 }
 
 void Compiler::Impl::leave()
@@ -943,6 +954,15 @@ void Compiler::Impl::instr(
         opcode += c_opcode_field_w;
     }
 
+    instr_no_w(opcode, reg, size, rm_ref);
+}
+
+void Compiler::Impl::instr_no_w(
+    uint8_t opcode,
+    int8_t reg,
+    Size size,
+    const Ref &rm_ref)
+{
     if (rm_ref.type == Ref::Type::Mem &&
         ((rm_ref.mem.base != NOREG && rm_ref.mem.base.size != Size::Qword) ||
          (rm_ref.mem.index != NOREG && rm_ref.mem.index.size != Size::Qword)))

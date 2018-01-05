@@ -310,6 +310,9 @@ public: // methods
     void enter(uint16_t imm16, uint8_t imm8);
     void enterw(uint16_t imm16, uint8_t imm8);
     void enterq(uint16_t imm16, uint8_t imm8);
+
+    void lea(const MemRef &mem_ref, const RegRef &reg_ref);
+
     void leave();
     void leavew();
     void leaveq();

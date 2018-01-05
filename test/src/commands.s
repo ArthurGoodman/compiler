@@ -159,3 +159,7 @@ enterw $0xeeee, $0xff
 enter $0xeeee, $0xff
 leavew
 leave
+nop
+lea (%eax),%cx
+lea (%eax),%ecx
+lea (%eax),%rcx
