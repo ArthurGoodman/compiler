@@ -131,6 +131,11 @@ public: // methods
 
     void nop();
 
+    void ret(uint16_t imm);
+    void ret();
+    void lret(uint16_t imm);
+    void lret();
+
     void sub(const Ref &src, const Ref &dst);
     void subb(uint8_t imm, const Ref &dst);
     void subw(uint16_t imm, const Ref &dst);
@@ -702,6 +707,26 @@ void Compiler::nop()
     return m_impl->nop();
 }
 
+void Compiler::ret(uint16_t imm)
+{
+    return m_impl->ret(imm);
+}
+
+void Compiler::ret()
+{
+    return m_impl->ret();
+}
+
+void Compiler::lret(uint16_t imm)
+{
+    return m_impl->lret(imm);
+}
+
+void Compiler::lret()
+{
+    return m_impl->lret();
+}
+
 void Compiler::sub(const Ref &src, const Ref &dst)
 {
     return m_impl->sub(src, dst);
@@ -1053,6 +1078,28 @@ void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
 void Compiler::Impl::nop()
 {
     genb(0x90);
+}
+
+void Compiler::Impl::ret(uint16_t imm)
+{
+    genb(0xc2);
+    gen(imm);
+}
+
+void Compiler::Impl::ret()
+{
+    genb(0xc3);
+}
+
+void Compiler::Impl::lret(uint16_t imm)
+{
+    genb(0xca);
+    gen(imm);
+}
+
+void Compiler::Impl::lret()
+{
+    genb(0xcb);
 }
 
 void Compiler::Impl::sub(const Ref &src, const Ref &dst)

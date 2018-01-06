@@ -331,6 +331,11 @@ public: // methods
 
     void nop();
 
+    void ret(uint16_t imm);
+    void ret();
+    void lret(uint16_t imm);
+    void lret();
+
     void sub(const Ref &src, const Ref &dst);
     void subb(uint8_t imm, const Ref &dst);
     void subw(uint16_t imm, const Ref &dst);

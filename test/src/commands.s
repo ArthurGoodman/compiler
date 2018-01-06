@@ -229,3 +229,8 @@ sub 0x7fffffff,%cl
 sub 0x7fffffff,%cx
 sub 0x7fffffff,%ecx
 sub 0x7fffffff,%rcx
+nop
+ret $0xffff
+ret
+lret $0xffff
+lret
