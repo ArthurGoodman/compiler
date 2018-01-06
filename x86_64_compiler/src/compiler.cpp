@@ -131,6 +131,10 @@ public: // methods
 
     void nop();
 
+    void pop(const RegRef &ref);
+    void popw(const MemRef &ref);
+    void popq(const MemRef &ref);
+
     void pushw(uint16_t imm);
     void pushq(uint32_t imm);
     void push(const RegRef &ref);
@@ -713,6 +717,21 @@ void Compiler::nop()
     return m_impl->nop();
 }
 
+void Compiler::pop(const RegRef &ref)
+{
+    return m_impl->pop(ref);
+}
+
+void Compiler::popw(const MemRef &ref)
+{
+    return m_impl->popw(ref);
+}
+
+void Compiler::popq(const MemRef &ref)
+{
+    return m_impl->popq(ref);
+}
+
 void Compiler::pushw(uint16_t imm)
 {
     return m_impl->pushw(imm);
@@ -1118,6 +1137,26 @@ void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
 void Compiler::Impl::nop()
 {
     genb(0x90);
+}
+
+void Compiler::Impl::pop(const RegRef &ref)
+{
+    if (ref.size == Size::Word)
+    {
+        gen(c_operand_size_override_prefix);
+    }
+
+    genb(0x58 + (ref.reg & c_x86_mask));
+}
+
+void Compiler::Impl::popw(const MemRef &ref)
+{
+    instr_no_w(0x8f, 0, Size::Word, ref);
+}
+
+void Compiler::Impl::popq(const MemRef &ref)
+{
+    instr_no_w(0x8f, 0, Size::Dword, ref);
 }
 
 void Compiler::Impl::pushw(uint16_t imm)

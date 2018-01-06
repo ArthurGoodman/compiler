@@ -243,3 +243,8 @@ push %cx
 push %rcx
 pushw (%eax)
 push (%eax)
+nop
+pop %cx
+pop %rcx
+popw (%eax)
+pop (%eax)
