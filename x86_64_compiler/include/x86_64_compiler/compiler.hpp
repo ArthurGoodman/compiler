@@ -5,6 +5,7 @@
 #include <string>
 
 #include "x86_64_compiler/bytearray.hpp"
+#include "x86_64_compiler/function.hpp"
 
 namespace x86_64 {
 
