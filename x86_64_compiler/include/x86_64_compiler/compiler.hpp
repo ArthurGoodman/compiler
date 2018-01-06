@@ -331,6 +331,12 @@ public: // methods
 
     void nop();
 
+    void pushw(uint16_t imm);
+    void pushq(uint32_t imm);
+    void push(const RegRef &ref);
+    void pushw(const MemRef &ref);
+    void pushq(const MemRef &ref);
+
     void ret(uint16_t imm);
     void ret();
     void lret(uint16_t imm);

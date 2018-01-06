@@ -131,6 +131,12 @@ public: // methods
 
     void nop();
 
+    void pushw(uint16_t imm);
+    void pushq(uint32_t imm);
+    void push(const RegRef &ref);
+    void pushw(const MemRef &ref);
+    void pushq(const MemRef &ref);
+
     void ret(uint16_t imm);
     void ret();
     void lret(uint16_t imm);
@@ -145,12 +151,12 @@ public: // methods
 private: // methods
     void add(const Imm &imm, const Ref &dst);
     void mov(const Imm &imm, const Ref &dst);
+    void push(const Imm &imm);
     void sub(const Imm &imm, const Ref &dst);
 
     void instr(uint8_t opcode, const Ref &op1, const Ref &dst);
     void instr(uint8_t opcode, int8_t reg, Size size, const Ref &rm_ref);
     void instr_no_w(uint8_t opcode, int8_t reg, Size size, const Ref &rm_ref);
-    void instr(uint8_t opcode, const Imm &imm, int8_t reg);
     void instr(uint8_t opcode, int8_t ext, const Imm &imm, const Ref &dst);
 
     void genREXPrefix(
@@ -612,32 +618,32 @@ void Compiler::callq(int32_t disp)
     return m_impl->callq(disp);
 }
 
-void Compiler::call(const Compiler::Ref &ref)
+void Compiler::call(const Ref &ref)
 {
     return m_impl->call(ref);
 }
 
-void Compiler::callw(const Compiler::Ref &ref)
+void Compiler::callw(const Ref &ref)
 {
     return m_impl->callw(ref);
 }
 
-void Compiler::callq(const Compiler::Ref &ref)
+void Compiler::callq(const Ref &ref)
 {
     return m_impl->callq(ref);
 }
 
-void Compiler::lcall(const Compiler::Ref &ref)
+void Compiler::lcall(const Ref &ref)
 {
     return m_impl->lcall(ref);
 }
 
-void Compiler::lcallw(const Compiler::Ref &ref)
+void Compiler::lcallw(const Ref &ref)
 {
     return m_impl->lcallw(ref);
 }
 
-void Compiler::lcalll(const Compiler::Ref &ref)
+void Compiler::lcalll(const Ref &ref)
 {
     return m_impl->lcalll(ref);
 }
@@ -705,6 +711,31 @@ void Compiler::movq(uint64_t imm, const Ref &dst)
 void Compiler::nop()
 {
     return m_impl->nop();
+}
+
+void Compiler::pushw(uint16_t imm)
+{
+    return m_impl->pushw(imm);
+}
+
+void Compiler::pushq(uint32_t imm)
+{
+    return m_impl->pushq(imm);
+}
+
+void Compiler::push(const RegRef &ref)
+{
+    return m_impl->push(ref);
+}
+
+void Compiler::pushw(const MemRef &ref)
+{
+    return m_impl->pushw(ref);
+}
+
+void Compiler::pushq(const MemRef &ref)
+{
+    return m_impl->pushq(ref);
 }
 
 void Compiler::ret(uint16_t imm)
@@ -1071,13 +1102,79 @@ void Compiler::Impl::mov(const Imm &imm, const Ref &dst)
     }
     else
     {
-        instr(dst.reg.size == Size::Byte ? 0xb0 : 0xb8, imm, dst.reg.reg);
+        if (imm.size == Size::Word)
+        {
+            gen(c_operand_size_override_prefix);
+        }
+
+        genREXPrefix(-1, Size::None, -1, dst.reg.reg);
+        genb(
+            (dst.reg.size == Size::Byte ? 0xb0 : 0xb8) +
+            (dst.reg.reg & c_x86_mask));
+        gen(imm);
     }
 }
 
 void Compiler::Impl::nop()
 {
     genb(0x90);
+}
+
+void Compiler::Impl::pushw(uint16_t imm)
+{
+    push(imm);
+}
+
+void Compiler::Impl::pushq(uint32_t imm)
+{
+    push(imm);
+}
+
+void Compiler::Impl::push(const RegRef &ref)
+{
+    if (ref.size == Size::Word)
+    {
+        gen(c_operand_size_override_prefix);
+    }
+
+    genb(0x50 + (ref.reg & c_x86_mask));
+}
+
+void Compiler::Impl::pushw(const MemRef &ref)
+{
+    instr_no_w(0xff, 6, Size::Word, ref);
+}
+
+void Compiler::Impl::pushq(const MemRef &ref)
+{
+    instr_no_w(0xff, 6, Size::Dword, ref);
+}
+
+void Compiler::Impl::push(const Imm &imm)
+{
+    if (imm.size == Size::Word)
+    {
+        gen(c_operand_size_override_prefix);
+    }
+
+    if (isByte(imm.dword))
+    {
+        genb(0x6a);
+        gen(imm.byte);
+    }
+    else
+    {
+        genb(0x68);
+
+        if (imm.size == Size::Word)
+        {
+            gen(imm.word);
+        }
+        else
+        {
+            gen(imm.dword);
+        }
+    }
 }
 
 void Compiler::Impl::ret(uint16_t imm)
@@ -1215,18 +1312,6 @@ void Compiler::Impl::instr_no_w(
     genREXPrefix(reg, size, index, base);
     gen(opcode);
     genRef(reg, rm_ref);
-}
-
-void Compiler::Impl::instr(uint8_t opcode, const Imm &imm, int8_t reg)
-{
-    if (imm.size == Size::Word)
-    {
-        gen(c_operand_size_override_prefix);
-    }
-
-    genREXPrefix(-1, Size::None, -1, reg);
-    genb(opcode + (reg & c_x86_mask));
-    gen(imm);
 }
 
 void Compiler::Impl::instr(

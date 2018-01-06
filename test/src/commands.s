@@ -234,3 +234,12 @@ ret $0xffff
 ret
 lret $0xffff
 lret
+nop
+pushw $0x7f
+push $0x7f
+pushw $0x7fff
+push $0x7fffffff
+push %cx
+push %rcx
+pushw (%eax)
+push (%eax)
