@@ -1,83 +1,73 @@
 #pragma once
 
 #include "x86_64_compiler/bytearray.hpp"
+#include "x86_64_compiler/common.hpp"
 
 namespace x86_64 {
 
-class Function final
+template <class>
+class Function;
+
+template <class R, class... Args>
+class Function<R(Args...)> final
 {
 public: // methods
-    explicit Function(const ByteArray &code);
-
-    explicit Function(const Function &f);
-    explicit Function(Function &&f);
-
-    ~Function();
-
-    Function &operator=(const Function &f);
-    Function &operator=(Function &&f);
-
-    template <class R, class... Args>
-    R invoke(Args &&... args) const;
-
-private: // types
-    template <class... Args>
-    class InvokeHelper;
-
-    template <class... Args>
-    class InvokeHelper<void, Args...>
+    explicit Function(const ByteArray &code)
+        : m_code_ptr{allocateExecutableMemory(code.data(), code.size())}
+        , m_code_size{code.size()}
     {
-    public:
-        InvokeHelper(const Function &f_ref)
-            : m_f_ref(f_ref)
-        {
-        }
+    }
 
-        void operator()(Args &&... args) const
-        {
-            using FuncPtrType = void (*)(Args...);
-            FuncPtrType f_ptr =
-                reinterpret_cast<FuncPtrType>(m_f_ref.m_code_ptr);
-            f_ptr(std::forward<Args>(args)...);
-        }
-
-    private:
-        const Function &m_f_ref;
-    };
-
-    template <class R, class... Args>
-    class InvokeHelper<R, Args...>
+    explicit Function(const Function &f)
+        : m_code_ptr{nullptr}
     {
-    public:
-        InvokeHelper(const Function &f_ref)
-            : m_f_ref(f_ref)
-        {
-        }
+        *this = f;
+    }
 
-        R operator()(Args &&... args) const
-        {
-            using FuncPtrType = R (*)(Args...);
-            FuncPtrType f_ptr =
-                reinterpret_cast<FuncPtrType>(m_f_ref.m_code_ptr);
-            return f_ptr(std::forward<Args>(args)...);
-        }
+    explicit Function(Function &&f)
+        : m_code_ptr{nullptr}
+    {
+        *this = std::move(f);
+    }
 
-    private:
-        const Function &m_f_ref;
-    };
+    ~Function()
+    {
+        free(m_code_ptr);
+    }
 
-private: // methods
-    void allocateMemory(const void *code_ptr, size_t code_size);
+    Function &operator=(const Function &f)
+    {
+        free(m_code_ptr);
+
+        m_code_ptr = allocateExecutableMemory(f.m_code_ptr, f.m_code_size);
+        m_code_size = f.m_code_size;
+
+        return *this;
+    }
+
+    Function &operator=(Function &&f)
+    {
+        free(m_code_ptr);
+
+        m_code_ptr = f.m_code_ptr;
+        m_code_size = f.m_code_size;
+
+        f.m_code_ptr = nullptr;
+        f.m_code_size = 0;
+
+        return *this;
+    }
+
+    R operator()(Args &&... args) const
+    {
+        using FuncPtrType = R (*)(Args...);
+        FuncPtrType f_ptr = reinterpret_cast<FuncPtrType>(m_code_ptr);
+        return f_ptr(std::forward<Args>(args)...);
+    }
 
 private: // fields
     void *m_code_ptr;
     size_t m_code_size;
 };
-
-template <class R, class... Args>
-R Function::invoke(Args &&... args) const
-{
-    return InvokeHelper<R, Args...>(*this)(std::forward<Args>(args)...);
-}
 
 } // namespace x86_64

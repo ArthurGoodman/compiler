@@ -68,8 +68,8 @@ int main()
     s << std::flush;
     system("objdump -D -w -b binary -m i386:x86-64 dump.bin > disasm.txt");
 
-    Function f(c.getCode());
-    std::cout << f.invoke<int>(4, 5) << std::endl;
+    Function<int(int, int)> f(c.getCode());
+    std::cout << f(4, 5) << std::endl;
 
     return 0;
 }
