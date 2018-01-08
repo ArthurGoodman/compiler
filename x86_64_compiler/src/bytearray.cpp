@@ -7,6 +7,8 @@ namespace x86_64 {
 
 ByteArray::ByteArray()
 {
+    ///@ hack to avoid relocation
+    m_data.reserve(0x1000);
 }
 
 ByteArray::ByteArray(const ByteArray &array)

@@ -19,5 +19,5 @@ set(X86_64_TEST x86_64_test)
 add_subdirectory(x86_64_compiler)
 add_subdirectory(test)
 
-#set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Release)

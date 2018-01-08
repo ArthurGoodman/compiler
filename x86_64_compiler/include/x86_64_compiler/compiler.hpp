@@ -188,6 +188,7 @@ public: // types
         RegRef index;
         RegRef base;
         int64_t disp;
+        bool disp_specified;
     };
 
     friend MemRef operator+(int64_t offset, const MemRef &ref);
@@ -232,20 +233,16 @@ public: // types
         {
             Reg,
             Mem,
-            Sym,
         };
 
     public: // methods
         Ref(const RegRef &ref);
         Ref(const MemRef &ref);
-        Ref(const SymRef &ref);
         Ref(const Ref &ref);
         Ref(Ref &&ref);
 
         Ref &operator=(const Ref &ref);
         Ref &operator=(Ref &&ref);
-
-        ~Ref();
 
         Ref operator+(int64_t offset) const;
 
@@ -256,7 +253,6 @@ public: // types
         {
             RegRef reg;
             MemRef mem;
-            SymRef sym;
         };
     };
 
@@ -292,6 +288,8 @@ public: // methods
     SymRef abs(const std::string &name);
     SymRef rel(const std::string &name);
 
+    void relocate(const std::string &name, int64_t value);
+
     void constant(uint8_t value);
     void constant(uint16_t value);
     void constant(uint32_t value);
@@ -313,21 +311,27 @@ public: // methods
     void lcall(const Ref &ref);
     void lcallw(const Ref &ref);
     void lcalll(const Ref &ref);
+    void call(const SymRef &ref);
+    void lcall(const SymRef &ref);
 
     void enter(uint16_t imm16, uint8_t imm8);
     void enterw(uint16_t imm16, uint8_t imm8);
     void enterq(uint16_t imm16, uint8_t imm8);
 
     void lea(const MemRef &mem_ref, const RegRef &reg_ref);
+    void lea(const SymRef &sym_ref, const RegRef &reg_ref);
 
     void leave();
     void leavew();
     void leaveq();
 
     void mov(const Ref &src, const Ref &dst);
+    void mov(const SymRef &src, const RegRef &dst);
+    void mov(const RegRef &src, const SymRef &dst);
     void movb(uint8_t imm, const Ref &dst);
     void movw(uint16_t imm, const Ref &dst);
     void movl(uint32_t imm, const Ref &dst);
+    void movl(const SymRef &imm, const Ref &dst);
     void movq(uint64_t imm, const Ref &dst);
 
     void nop();
@@ -336,11 +340,14 @@ public: // methods
     void popw(const MemRef &ref);
     void popq(const MemRef &ref);
 
+    void push(uint32_t imm);
     void pushw(uint16_t imm);
     void pushq(uint32_t imm);
     void push(const RegRef &ref);
     void pushw(const MemRef &ref);
     void pushq(const MemRef &ref);
+    void pushw(const SymRef &ref);
+    void pushq(const SymRef &ref);
 
     void ret(uint16_t imm);
     void ret();

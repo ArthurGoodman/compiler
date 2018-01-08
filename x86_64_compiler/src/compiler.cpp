@@ -72,6 +72,13 @@ private: // types
         RELOC,
     };
 
+    struct Reloc
+    {
+        std::string name;
+        SymRef::Type type;
+        int64_t offset;
+    };
+
 public: // methods
     void reset();
 
@@ -90,6 +97,8 @@ public: // methods
 
     SymRef abs(const std::string &name);
     SymRef rel(const std::string &name);
+
+    void relocate(const std::string &name, int64_t value);
 
     void constant(uint8_t value);
     void constant(uint16_t value);
@@ -112,21 +121,27 @@ public: // methods
     void lcall(const Ref &ref);
     void lcallw(const Ref &ref);
     void lcalll(const Ref &ref);
+    void call(const SymRef &ref);
+    void lcall(const SymRef &ref);
 
     void enter(uint16_t imm16, uint8_t imm8);
     void enterw(uint16_t imm16, uint8_t imm8);
     void enterq(uint16_t imm16, uint8_t imm8);
 
     void lea(const MemRef &mem_ref, const RegRef &reg_ref);
+    void lea(const SymRef &sym_ref, const RegRef &reg_ref);
 
     void leave();
     void leavew();
     void leaveq();
 
     void mov(const Ref &src, const Ref &dst);
+    void mov(const SymRef &src, const RegRef &dst);
+    void mov(const RegRef &src, const SymRef &dst);
     void movb(uint8_t imm, const Ref &dst);
     void movw(uint16_t imm, const Ref &dst);
     void movl(uint32_t imm, const Ref &dst);
+    void movl(const SymRef &imm, const Ref &dst);
     void movq(uint64_t imm, const Ref &dst);
 
     void nop();
@@ -135,11 +150,14 @@ public: // methods
     void popw(const MemRef &ref);
     void popq(const MemRef &ref);
 
+    void push(uint32_t imm);
     void pushw(uint16_t imm);
     void pushq(uint32_t imm);
     void push(const RegRef &ref);
     void pushw(const MemRef &ref);
     void pushq(const MemRef &ref);
+    void pushw(const SymRef &ref);
+    void pushq(const SymRef &ref);
 
     void ret(uint16_t imm);
     void ret();
@@ -197,6 +215,8 @@ private: // methods
         const std::string &base_symbol,
         std::size_t offset);
 
+    void pushReloc(const Reloc &reloc);
+
 public:
     template <class T>
     typename std::enable_if<std::is_signed<T>::value, bool>::type isByte(
@@ -229,6 +249,7 @@ public:
 private: // fields
     std::map<SectionID, ByteArray> m_sections;
     std::map<std::string, Symbol> m_symbols;
+    std::vector<Reloc> m_relocs;
 };
 
 template <class T>
@@ -278,6 +299,7 @@ Compiler::MemRef::MemRef(int8_t scale, const RegRef &index, const RegRef &base)
     , index{index}
     , base{base}
     , disp{0}
+    , disp_specified{false}
 {
 }
 
@@ -291,6 +313,7 @@ Compiler::MemRef::MemRef(const MemRef &ref, int64_t disp)
     , index{ref.index}
     , base{ref.base}
     , disp{disp}
+    , disp_specified{true}
 {
 }
 
@@ -386,12 +409,6 @@ Compiler::Ref::Ref(const MemRef &ref)
 {
 }
 
-Compiler::Ref::Ref(const SymRef &ref)
-    : type{Type::Sym}
-    , sym{ref}
-{
-}
-
 Compiler::Ref::Ref(const Ref &ref)
 {
     *this = ref;
@@ -415,10 +432,6 @@ Compiler::Ref &Compiler::Ref::operator=(const Ref &ref)
     case Type::Mem:
         mem = ref.mem;
         break;
-
-    case Type::Sym:
-        sym = ref.sym;
-        break;
     }
 
     return *this;
@@ -437,39 +450,17 @@ Compiler::Ref &Compiler::Ref::operator=(Ref &&ref)
     case Type::Mem:
         mem = std::move(ref.mem);
         break;
-
-    case Type::Sym:
-        sym = std::move(ref.sym);
-        break;
     }
 
     return *this;
-}
-
-Compiler::Ref::~Ref()
-{
-    if (type == Type::Sym)
-    {
-        sym.~SymRef();
-    }
 }
 
 Compiler::Ref Compiler::Ref::operator+(int64_t offset) const
 {
     Ref ref = *this;
 
-    switch (ref.type)
-    {
-    case Type::Reg:
-    case Type::Mem:
-        ref.type = Type::Mem;
-        ref.mem = ref.mem + offset;
-        break;
-
-    case Type::Sym:
-        ref.sym = ref.sym + offset;
-        break;
-    }
+    ref.type = Type::Mem;
+    ref.mem = ref.mem + offset;
 
     return ref;
 }
@@ -555,6 +546,11 @@ Compiler::SymRef Compiler::abs(const std::string &name)
 Compiler::SymRef Compiler::rel(const std::string &name)
 {
     return m_impl->rel(name);
+}
+
+void Compiler::relocate(const std::string &name, int64_t value)
+{
+    return m_impl->relocate(name, value);
 }
 
 void Compiler::constant(uint8_t value)
@@ -652,6 +648,16 @@ void Compiler::lcalll(const Ref &ref)
     return m_impl->lcalll(ref);
 }
 
+void Compiler::call(const SymRef &ref)
+{
+    return m_impl->call(ref);
+}
+
+void Compiler::lcall(const SymRef &ref)
+{
+    return m_impl->lcall(ref);
+}
+
 void Compiler::enter(uint16_t imm16, uint8_t imm8)
 {
     return m_impl->enter(imm16, imm8);
@@ -670,6 +676,11 @@ void Compiler::enterq(uint16_t imm16, uint8_t imm8)
 void Compiler::lea(const MemRef &mem_ref, const RegRef &reg_ref)
 {
     return m_impl->lea(mem_ref, reg_ref);
+}
+
+void Compiler::lea(const SymRef &sym_ref, const RegRef &reg_ref)
+{
+    return m_impl->lea(sym_ref, reg_ref);
 }
 
 void Compiler::leave()
@@ -692,6 +703,16 @@ void Compiler::mov(const Ref &src, const Ref &dst)
     return m_impl->mov(src, dst);
 }
 
+void Compiler::mov(const SymRef &src, const RegRef &dst)
+{
+    return m_impl->mov(src, dst);
+}
+
+void Compiler::mov(const RegRef &src, const SymRef &dst)
+{
+    return m_impl->mov(src, dst);
+}
+
 void Compiler::movb(uint8_t imm, const Ref &dst)
 {
     return m_impl->movb(imm, dst);
@@ -703,6 +724,11 @@ void Compiler::movw(uint16_t imm, const Ref &dst)
 }
 
 void Compiler::movl(uint32_t imm, const Ref &dst)
+{
+    return m_impl->movl(imm, dst);
+}
+
+void Compiler::movl(const SymRef &imm, const Ref &dst)
 {
     return m_impl->movl(imm, dst);
 }
@@ -732,6 +758,11 @@ void Compiler::popq(const MemRef &ref)
     return m_impl->popq(ref);
 }
 
+void Compiler::push(uint32_t imm)
+{
+    return m_impl->push(imm);
+}
+
 void Compiler::pushw(uint16_t imm)
 {
     return m_impl->pushw(imm);
@@ -753,6 +784,16 @@ void Compiler::pushw(const MemRef &ref)
 }
 
 void Compiler::pushq(const MemRef &ref)
+{
+    return m_impl->pushq(ref);
+}
+
+void Compiler::pushw(const SymRef &ref)
+{
+    return m_impl->pushw(ref);
+}
+
+void Compiler::pushq(const SymRef &ref)
 {
     return m_impl->pushq(ref);
 }
@@ -902,6 +943,22 @@ Compiler::SymRef Compiler::Impl::rel(const std::string &name)
     return SymRef(SymRef::Type::Rel, name);
 }
 
+void Compiler::Impl::relocate(const std::string &name, int64_t value)
+{
+    for (auto &reloc : m_relocs)
+        if (reloc.name == name)
+        {
+            if (reloc.type == SymRef::Type::Abs)
+                *reinterpret_cast<uint32_t *>(
+                    section(TEXT).data() + reloc.offset) += value;
+            else
+                *reinterpret_cast<uint32_t *>(
+                    section(TEXT).data() + reloc.offset) +=
+                    value - reinterpret_cast<int64_t>(
+                                section(TEXT).data() + reloc.offset + 4);
+        }
+}
+
 void Compiler::Impl::constant(uint8_t value)
 {
     gen(value);
@@ -1036,6 +1093,34 @@ void Compiler::Impl::lcalll(const Ref &ref)
     instr_no_w(0xff, 3, Size::Dword, ref);
 }
 
+void Compiler::Impl::call(const SymRef &ref)
+{
+    if (ref.type == SymRef::Type::Rel)
+    {
+        call(static_cast<int32_t>(ref.offset));
+    }
+    else
+    {
+        call(MemRef(0, NOREG, NOREG) + ref.offset);
+    }
+
+    pushReloc(
+        {ref.name, ref.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
+}
+
+void Compiler::Impl::lcall(const SymRef &ref)
+{
+    if (ref.type == SymRef::Type::Rel)
+    {
+        throw std::runtime_error("far call cannot be relative");
+    }
+
+    lcall(MemRef(0, NOREG, NOREG) + ref.offset);
+
+    pushReloc(
+        {ref.name, ref.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
+}
+
 void Compiler::Impl::enter(uint16_t imm16, uint8_t imm8)
 {
     enterq(imm16, imm8);
@@ -1057,6 +1142,15 @@ void Compiler::Impl::enterq(uint16_t imm16, uint8_t imm8)
 void Compiler::Impl::lea(const MemRef &mem_ref, const RegRef &reg_ref)
 {
     instr_no_w(0x8d, reg_ref.reg, reg_ref.size, mem_ref);
+}
+
+void Compiler::Impl::lea(const SymRef &sym_ref, const RegRef &reg_ref)
+{
+    lea(MemRef(0, NOREG, NOREG) + sym_ref.offset, reg_ref);
+
+    pushReloc({sym_ref.name,
+               sym_ref.type,
+               static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
 
 void Compiler::Impl::leave()
@@ -1092,6 +1186,20 @@ void Compiler::Impl::mov(const Ref &src, const Ref &dst)
     }
 }
 
+void Compiler::Impl::mov(const SymRef &src, const RegRef &dst)
+{
+    mov(MemRef(0, NOREG, NOREG) + src.offset, dst);
+    pushReloc(
+        {src.name, src.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
+}
+
+void Compiler::Impl::mov(const RegRef &src, const SymRef &dst)
+{
+    mov(src, MemRef(0, NOREG, NOREG) + dst.offset);
+    pushReloc(
+        {dst.name, dst.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
+}
+
 void Compiler::Impl::movb(uint8_t imm, const Ref &dst)
 {
     mov(imm, dst);
@@ -1105,6 +1213,13 @@ void Compiler::Impl::movw(uint16_t imm, const Ref &dst)
 void Compiler::Impl::movl(uint32_t imm, const Ref &dst)
 {
     mov(imm, dst);
+}
+
+void Compiler::Impl::movl(const SymRef &imm, const Ref &dst)
+{
+    mov(static_cast<uint32_t>(imm.offset), dst);
+    pushReloc(
+        {imm.name, imm.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
 
 void Compiler::Impl::movq(uint64_t imm, const Ref &dst)
@@ -1159,6 +1274,11 @@ void Compiler::Impl::popq(const MemRef &ref)
     instr_no_w(0x8f, 0, Size::Dword, ref);
 }
 
+void Compiler::Impl::push(uint32_t imm)
+{
+    pushq(imm);
+}
+
 void Compiler::Impl::pushw(uint16_t imm)
 {
     push(imm);
@@ -1187,6 +1307,20 @@ void Compiler::Impl::pushw(const MemRef &ref)
 void Compiler::Impl::pushq(const MemRef &ref)
 {
     instr_no_w(0xff, 6, Size::Dword, ref);
+}
+
+void Compiler::Impl::pushw(const SymRef &ref)
+{
+    pushw(MemRef(0, NOREG, NOREG) + ref.offset);
+    pushReloc(
+        {ref.name, ref.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
+}
+
+void Compiler::Impl::pushq(const SymRef &ref)
+{
+    pushq(MemRef(0, NOREG, NOREG) + ref.offset);
+    pushReloc(
+        {ref.name, ref.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
 
 void Compiler::Impl::push(const Imm &imm)
@@ -1443,7 +1577,7 @@ void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
     genCompositeByte(mod, reg & c_x86_mask, rm);
     genSIB(mem_ref);
 
-    if (mem_ref.disp || (mem_ref.base.reg & c_x86_mask) == 5)
+    if (mem_ref.disp_specified || (mem_ref.base.reg & c_x86_mask) == 5)
     {
         if (isByte(mem_ref.disp) && mem_ref.base != NOREG)
         {
@@ -1563,6 +1697,11 @@ void Compiler::Impl::pushSymbol(
         throw std::runtime_error("symbol '" + name + "' is already defined");
 
     m_symbols[name] = Symbol{base_symbol, offset};
+}
+
+void Compiler::Impl::pushReloc(const Compiler::Impl::Reloc &reloc)
+{
+    m_relocs.emplace_back(reloc);
 }
 
 } // namespace x86_64

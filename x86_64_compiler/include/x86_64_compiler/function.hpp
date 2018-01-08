@@ -13,15 +13,9 @@ class Function<R(Args...)> final
 {
 public: // methods
     explicit Function(const ByteArray &code)
-        : m_code_ptr{allocateExecutableMemory(code.data(), code.size())}
+        : m_code_ptr{code.data()} ///@ hack
         , m_code_size{code.size()}
     {
-    }
-
-    explicit Function(const Function &f)
-        : m_code_ptr{nullptr}
-    {
-        *this = f;
     }
 
     explicit Function(Function &&f)
@@ -32,22 +26,12 @@ public: // methods
 
     ~Function()
     {
-        free(m_code_ptr);
-    }
-
-    Function &operator=(const Function &f)
-    {
-        free(m_code_ptr);
-
-        m_code_ptr = allocateExecutableMemory(f.m_code_ptr, f.m_code_size);
-        m_code_size = f.m_code_size;
-
-        return *this;
+        // free(m_code_ptr);
     }
 
     Function &operator=(Function &&f)
     {
-        free(m_code_ptr);
+        // free(m_code_ptr);
 
         m_code_ptr = f.m_code_ptr;
         m_code_size = f.m_code_size;
@@ -66,7 +50,7 @@ public: // methods
     }
 
 private: // fields
-    void *m_code_ptr;
+    const void *m_code_ptr;
     size_t m_code_size;
 };
 

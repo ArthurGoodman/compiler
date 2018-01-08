@@ -1,5 +1,11 @@
 #include <x86_64_compiler/compiler.hpp>
 
+#include <cstring>
+#include <malloc.h>
+#include <stdexcept>
+#include <unistd.h>
+#include <sys/mman.h>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -34,7 +40,7 @@ void testCommands() try
         s.clear();                                                       \
     }
 
-    // #include "commands.txt"
+#include "commands.txt"
 
     bin << std::flush;
 
@@ -47,29 +53,58 @@ catch (const std::exception &e)
     std::cout << "error: " << e.what() << std::endl;
 }
 
+int f()
+{
+    puts("hello");
+    return 0;
+}
+
 int main()
 {
+    // testCommands();
+    // return 0;
+
     using namespace x86_64;
 
     Compiler c;
 
     c.push(RBP);
     c.mov(RSP, RBP);
-    c.mov(EDI, c.mem(RBP) - 4);
-    c.mov(ESI, c.mem(RBP) - 8);
-    c.mov(c.mem(RBP) - 4, EDX);
-    c.mov(c.mem(RBP) - 8, EAX);
-    c.add(EDX, EAX);
+    c.lea(c.abs("str"), RDI);
+    c.call(c.rel("puts"));
+    c.movl(0, EAX);
     c.pop(RBP);
     c.ret();
 
+    const char *str = "Hello, World!";
+    std::cout << std::hex << (int64_t)str << std::endl << std::flush;
+
+    c.relocate("str", reinterpret_cast<int64_t>(str));
+    c.relocate("puts", reinterpret_cast<int64_t>(f));
+
     std::ofstream s("dump.bin", std::ios::binary);
+
+    ByteArray f_code;
+    f_code.push(reinterpret_cast<uint8_t *>(&f), 23);
+    f_code.write(s);
+
     c.getCode().write(s);
     s << std::flush;
     system("objdump -D -w -b binary -m i386:x86-64 dump.bin > disasm.txt");
 
-    Function<int(int, int)> f(c.getCode());
-    std::cout << f(4, 5) << std::endl;
+    const ByteArray &code = c.getCode();
+
+    if (mprotect(
+            reinterpret_cast<void *>(
+                reinterpret_cast<int64_t>(code.data()) & ~0xfff),
+            0x1000,
+            PROT_READ | PROT_WRITE | PROT_EXEC) == -1)
+    {
+        return 1;
+    }
+
+    Function<void()> f(code);
+    f();
 
     return 0;
 }
