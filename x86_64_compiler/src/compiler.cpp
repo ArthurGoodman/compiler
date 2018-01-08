@@ -1146,7 +1146,9 @@ void Compiler::Impl::lea(const MemRef &mem_ref, const RegRef &reg_ref)
 
 void Compiler::Impl::lea(const SymRef &sym_ref, const RegRef &reg_ref)
 {
-    lea(MemRef(0, NOREG, NOREG) + sym_ref.offset, reg_ref);
+    lea(MemRef(0, NOREG, sym_ref.type == SymRef::Type::Rel ? RIP : NOREG) +
+            sym_ref.offset,
+        reg_ref);
 
     pushReloc({sym_ref.name,
                sym_ref.type,
@@ -1188,14 +1190,18 @@ void Compiler::Impl::mov(const Ref &src, const Ref &dst)
 
 void Compiler::Impl::mov(const SymRef &src, const RegRef &dst)
 {
-    mov(MemRef(0, NOREG, NOREG) + src.offset, dst);
+    mov(MemRef(0, NOREG, src.type == SymRef::Type::Rel ? RIP : NOREG) +
+            src.offset,
+        dst);
     pushReloc(
         {src.name, src.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
 
 void Compiler::Impl::mov(const RegRef &src, const SymRef &dst)
 {
-    mov(src, MemRef(0, NOREG, NOREG) + dst.offset);
+    mov(src,
+        MemRef(0, NOREG, dst.type == SymRef::Type::Rel ? RIP : NOREG) +
+            dst.offset);
     pushReloc(
         {dst.name, dst.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
@@ -1311,14 +1317,18 @@ void Compiler::Impl::pushq(const MemRef &ref)
 
 void Compiler::Impl::pushw(const SymRef &ref)
 {
-    pushw(MemRef(0, NOREG, NOREG) + ref.offset);
+    pushw(
+        MemRef(0, NOREG, ref.type == SymRef::Type::Rel ? RIP : NOREG) +
+        ref.offset);
     pushReloc(
         {ref.name, ref.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
 
 void Compiler::Impl::pushq(const SymRef &ref)
 {
-    pushq(MemRef(0, NOREG, NOREG) + ref.offset);
+    pushq(
+        MemRef(0, NOREG, ref.type == SymRef::Type::Rel ? RIP : NOREG) +
+        ref.offset);
     pushReloc(
         {ref.name, ref.type, static_cast<int64_t>(sectionSize(TEXT) - 4)});
 }
@@ -1574,12 +1584,20 @@ void Compiler::Impl::genRef(int8_t reg, const MemRef &mem_ref)
         rm = 4;
     }
 
+    ///@ not optimal
+    if (mem_ref.base == RIP)
+    {
+        mod = c_mod_disp0;
+        rm = 5;
+    }
+
     genCompositeByte(mod, reg & c_x86_mask, rm);
     genSIB(mem_ref);
 
     if (mem_ref.disp_specified || (mem_ref.base.reg & c_x86_mask) == 5)
     {
-        if (isByte(mem_ref.disp) && mem_ref.base != NOREG)
+        if (isByte(mem_ref.disp) && mem_ref.base != NOREG &&
+            mem_ref.base != RIP)
         {
             gen(static_cast<uint8_t>(mem_ref.disp));
         }

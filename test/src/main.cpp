@@ -40,7 +40,7 @@ void testCommands() try
         s.clear();                                                       \
     }
 
-#include "commands.txt"
+    // #include "commands.txt"
 
     bin << std::flush;
 
@@ -53,11 +53,15 @@ catch (const std::exception &e)
     std::cout << "error: " << e.what() << std::endl;
 }
 
-int f()
+#pragma GCC push_options
+#pragma GCC optimize("O0")
+
+void puts_wrapper(const char *str)
 {
-    puts("hello");
-    return 0;
+    puts(str);
 }
+
+#pragma GCC pop_options
 
 int main()
 {
@@ -70,23 +74,24 @@ int main()
 
     c.push(RBP);
     c.mov(RSP, RBP);
-    c.lea(c.abs("str"), RDI);
+    c.lea(c.rel("str"), RDI);
     c.call(c.rel("puts"));
     c.movl(0, EAX);
     c.pop(RBP);
     c.ret();
 
-    const char *str = "Hello, World!";
-    std::cout << std::hex << (int64_t)str << std::endl << std::flush;
+    c.relocate("str", reinterpret_cast<int64_t>("Hello, World!"));
+    c.relocate("puts", reinterpret_cast<int64_t>(puts_wrapper));
 
-    c.relocate("str", reinterpret_cast<int64_t>(str));
-    c.relocate("puts", reinterpret_cast<int64_t>(f));
+    // std::cout << std::hex << (int64_t)c.getCode().data() << std::endl
+    //           << std::flush;
+    // std::cout << std::hex << (int64_t)puts << std::endl << std::flush;
 
     std::ofstream s("dump.bin", std::ios::binary);
 
-    ByteArray f_code;
-    f_code.push(reinterpret_cast<uint8_t *>(&f), 23);
-    f_code.write(s);
+    // ByteArray f_code;
+    // f_code.push(reinterpret_cast<uint8_t *>(&puts_wrapper), 28);
+    // f_code.write(s);
 
     c.getCode().write(s);
     s << std::flush;

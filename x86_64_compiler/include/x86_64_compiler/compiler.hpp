@@ -76,6 +76,7 @@ enum QwordReg
     R13,
     R14,
     R15,
+    RIP,
 };
 
 struct RegRef
@@ -166,6 +167,7 @@ constexpr detail::RegRef R12(detail::R12);
 constexpr detail::RegRef R13(detail::R13);
 constexpr detail::RegRef R14(detail::R14);
 constexpr detail::RegRef R15(detail::R15);
+constexpr detail::RegRef RIP(detail::RIP);
 
 class Compiler final
 {
